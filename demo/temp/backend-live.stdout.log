@@ -50,3 +50,5 @@ INFO:     127.0.0.1:54114 - "GET /frontend/capabilities HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54113 - "GET /agent-maturity HTTP/1.1" 200 OK
 INFO:     127.0.0.1:64223 - "GET /api/v1/ui/contexts?scope=all HTTP/1.1" 404 Not Found
 INFO:     127.0.0.1:64222 - "GET /agent-maturity HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61130 - "GET /api/v1/ui/contexts?scope=all HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61131 - "GET /api/v1/health HTTP/1.1" 200 OK

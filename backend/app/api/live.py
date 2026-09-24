@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import LiveSimulationSession
+from app.api.frontend import resolve_simulation_context
 from app.operation_mode import capabilities, get_operation_mode
-from app.schemas.live import LiveDecision, LiveSimulationCreate
+from app.schemas.live import ConfigurationDraftRequest, LiveDecision, LiveSimulationCreate
+from app.services.configuration_assistant import ConfigurationAssistantError, generate_configuration_draft
 from app.services.agent_maturity import calculate_agent_maturity
 from app.services.agentic_workflow import record_human_decision
 from app.services.live_simulation import (
@@ -30,6 +32,21 @@ def _key(value: str | None) -> str:
 @router.get("/frontend/capabilities")
 def frontend_capabilities() -> dict:
     return capabilities()
+
+
+@router.get("/api/v1/frontend/contexts/simulations/{simulation_id}")
+def simulation_context(simulation_id: str, db: Session = Depends(get_db)) -> dict:
+    return resolve_simulation_context(db, simulation_id)
+
+
+@router.post("/frontend/configuration-drafts")
+def configuration_draft(payload: ConfigurationDraftRequest) -> dict:
+    """Translate text to a validated draft; deliberately performs no database write."""
+    try:
+        draft, metadata = generate_configuration_draft(payload.prompt)
+    except ConfigurationAssistantError as error:
+        raise HTTPException(status_code=503, detail=error.detail or {"code":"LLM_CONFIGURATION_ERROR","message":str(error),"retryable":False}) from error
+    return {"draft": draft.model_dump(mode="json"), "metadata": metadata}
 
 
 @router.post("/live-simulations", status_code=status.HTTP_201_CREATED)

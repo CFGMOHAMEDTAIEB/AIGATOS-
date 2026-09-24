@@ -18,20 +18,71 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import (
-    AgenticWorkflow, Campaign, HumanApprovalRequest, Incident, IncidentEvidence,
+    AgentExecution, AgentMessage, AgenticWorkflow, Campaign, HumanApprovalRequest, Incident, IncidentEvidence,
     OTAEvent, SimulationRun, SimulationStage, SimulationVehicle, SoftwarePackage,
-    WorkflowHistory,
+    ToolExecution, WorkflowHistory,
 )
+from app.schemas.agents import AgentMessageContract, ToolInvocation
+from app.services.agent_llm import optional_agent_narrative
+from app.services.agent_tools import AGENT_TOOLS, authorize_tool
 
 
 AGENTS = ("MONITORING", "LOG_ANALYSIS", "CORRELATION", "RCA", "DECISION")
 NEXT_AGENT = {agent: AGENTS[index + 1] if index + 1 < len(AGENTS) else None for index, agent in enumerate(AGENTS)}
+STATE_BY_AGENT = {
+    "MONITORING": "DETECTED",
+    "LOG_ANALYSIS": "LOG_ANALYSIS",
+    "CORRELATION": "CORRELATION",
+    "RCA": "RCA",
+    "DECISION": "DECISION_PROPOSED",
+}
 TERMINAL_STATUSES = {"WAITING_FOR_HUMAN_APPROVAL", "HUMAN_APPROVED", "HUMAN_REJECTED", "FAILED"}
 ALLOWED_ACTIONS = {
     "PAUSE_CAMPAIGN",
     "EXCLUDE_INCOMPATIBLE_VEHICLES",
     "ASSIGN_CORRECTIVE_PACKAGE",
     "REQUEST_ADDITIONAL_INVESTIGATION",
+}
+
+AGENT_CONTRACTS = {
+    "MONITORING": {
+        "objective": "Collect the incident cohort and bind every observation to persistent evidence.",
+        "success": "Failed and control vehicles are identified and evidence is persisted.",
+        "failure": "Incident, Canary stage, events, or evidence cannot be validated.",
+        "stop": "Stop after producing INCIDENT_DETECTED for LOG_ANALYSIS.",
+    },
+    "LOG_ANALYSIS": {
+        "objective": "Build ordered vehicle timelines and normalize failure signatures.",
+        "success": "At least one evidence-backed normalized error and timeline exists.",
+        "failure": "No linked incident evidence can be analyzed.",
+        "stop": "Stop after producing LOG_SUMMARY_READY for CORRELATION.",
+    },
+    "CORRELATION": {
+        "objective": "Measure stratified associations without claiming causality.",
+        "success": "Evidence-backed correlations and uncertainty are persisted.",
+        "failure": "The failure/control cohorts cannot support the calculation.",
+        "stop": "Stop after producing CORRELATION_READY for RCA.",
+    },
+    "RCA": {
+        "objective": "Rank only hypotheses supported by validated incident evidence.",
+        "success": "At least one ranked hypothesis has evidence and a decomposed score.",
+        "failure": "No evidence-backed hypothesis passes validation.",
+        "stop": "Stop after producing RCA_READY for DECISION.",
+    },
+    "DECISION": {
+        "objective": "Propose bounded advisory actions and request human review.",
+        "success": "All actions are advisory, allow-listed, and require human approval.",
+        "failure": "An action is outside policy or lacks supporting evidence.",
+        "stop": "Stop in WAITING_FOR_HUMAN_APPROVAL without executing an OTA action.",
+    },
+}
+
+MESSAGE_BY_AGENT = {
+    "MONITORING": ("LOG_ANALYSIS", "INCIDENT_DETECTED"),
+    "LOG_ANALYSIS": ("CORRELATION", "LOG_SUMMARY_READY"),
+    "CORRELATION": ("RCA", "CORRELATION_READY"),
+    "RCA": ("DECISION", "RCA_READY"),
+    "DECISION": ("HUMAN", "HUMAN_APPROVAL_REQUIRED"),
 }
 
 
@@ -89,7 +140,7 @@ def create_workflow(db: Session, incident_id: str) -> tuple[AgenticWorkflow, boo
         campaign_id=incident.campaign_id,
         canary_stage_id=stage.id,
         current_agent=AGENTS[0],
-        workflow_status="QUEUED",
+        workflow_status="DETECTED",
     )
     db.add(workflow)
     db.flush()
@@ -155,6 +206,154 @@ def _output_summary(workflow: AgenticWorkflow) -> dict:
         "global_confidence": workflow.global_confidence,
         "approval_status": workflow.approval_status,
     }
+
+
+def _next_message_sequence(db: Session, workflow_id: str) -> int:
+    current = db.scalar(select(func.max(AgentMessage.sequence_number)).where(AgentMessage.workflow_id == workflow_id))
+    return (current or 0) + 1
+
+
+def _start_execution(db: Session, workflow: AgenticWorkflow, agent: str, input_summary: dict) -> AgentExecution:
+    contract = AGENT_CONTRACTS[agent]
+    attempt = db.scalar(select(func.max(AgentExecution.attempt)).where(
+        AgentExecution.workflow_id == workflow.id,
+        AgentExecution.agent_type == agent,
+    )) or 0
+    execution = AgentExecution(
+        workflow_id=workflow.id,
+        incident_id=workflow.incident_id,
+        agent_type=agent,
+        objective=contract["objective"],
+        status="RUNNING",
+        authorized_context={"workflow_id": workflow.id, "incident_id": workflow.incident_id},
+        tools_allowed=list(AGENT_TOOLS[agent]),
+        tools_used=[],
+        input_payload=input_summary,
+        output_payload={},
+        working_memory={},
+        evidence_ids=[],
+        incoming_message_ids=list(db.scalars(select(AgentMessage.id).where(
+            AgentMessage.workflow_id == workflow.id,
+            AgentMessage.receiver_agent == agent,
+        ))),
+        outgoing_message_ids=[],
+        validations=[],
+        attempt=attempt + 1,
+        duration_ms=0,
+        success_condition=contract["success"],
+        failure_condition=contract["failure"],
+        stop_condition=contract["stop"],
+        proposed_next_state=NEXT_AGENT[agent] or "WAITING_FOR_HUMAN_APPROVAL",
+        output_source="DETERMINISTIC",
+    )
+    db.add(execution)
+    db.flush()
+    return execution
+
+
+def _consume_inbound_messages(db: Session, workflow_id: str, agent: str) -> None:
+    now = datetime.now(timezone.utc)
+    for message in db.scalars(select(AgentMessage).where(
+        AgentMessage.workflow_id == workflow_id,
+        AgentMessage.receiver_agent == agent,
+        AgentMessage.consumed_at.is_(None),
+    )):
+        message.consumed_at = now
+
+
+def _record_tools(
+    db: Session,
+    execution: AgentExecution,
+    input_summary: dict,
+    output_summary: dict,
+    duration_ms: int,
+) -> None:
+    tool_names = AGENT_TOOLS[execution.agent_type]
+    execution.tools_used = list(tool_names)
+    per_tool_duration = duration_ms // max(1, len(tool_names))
+    for sequence, tool_name in enumerate(tool_names, 1):
+        definition = authorize_tool(ToolInvocation(
+            agent_type=execution.agent_type,
+            tool_name=tool_name,
+            input_payload=input_summary,
+        ))
+        definition.output_model.model_validate(output_summary)
+        db.add(ToolExecution(
+            agent_execution_id=execution.id,
+            workflow_id=execution.workflow_id,
+            agent_type=execution.agent_type,
+            tool_name=tool_name,
+            mode=definition.mode,
+            input_payload=input_summary,
+            output_payload=output_summary,
+            status="COMPLETED",
+            duration_ms=per_tool_duration,
+            sequence_number=sequence,
+        ))
+
+
+def _persist_agent_message(db: Session, workflow: AgenticWorkflow, agent: str, output_summary: dict) -> AgentMessage:
+    receiver, message_type = MESSAGE_BY_AGENT[agent]
+    existing = db.scalar(select(AgentMessage).where(
+        AgentMessage.correlation_id == workflow.id,
+        AgentMessage.sender_agent == agent,
+        AgentMessage.message_type == message_type,
+    ))
+    if existing is not None:
+        return existing
+    contract = AgentMessageContract(
+        sender_agent=agent,
+        receiver_agent=receiver,
+        message_type=message_type,
+        payload=output_summary,
+        evidence_ids=list(workflow.evidence_ids),
+        correlation_id=workflow.id,
+    )
+    validate_evidence_ids(db, workflow.incident_id, contract.evidence_ids)
+    message = AgentMessage(
+        workflow_id=workflow.id,
+        incident_id=workflow.incident_id,
+        sender_agent=contract.sender_agent,
+        receiver_agent=contract.receiver_agent,
+        message_type=contract.message_type,
+        payload=contract.payload,
+        evidence_ids=contract.evidence_ids,
+        correlation_id=contract.correlation_id,
+        sequence_number=_next_message_sequence(db, workflow.id),
+        validation_status="VALIDATED",
+    )
+    db.add(message)
+    return message
+
+
+def _persist_failure_message(db: Session, workflow: AgenticWorkflow, agent: str, error: Exception) -> None:
+    existing = db.scalar(select(AgentMessage).where(
+        AgentMessage.correlation_id == workflow.id,
+        AgentMessage.sender_agent == agent,
+        AgentMessage.message_type == "VALIDATION_FAILED",
+    ))
+    if existing is not None:
+        return
+    contract = AgentMessageContract(
+        sender_agent=agent,
+        receiver_agent="ORCHESTRATOR",
+        message_type="VALIDATION_FAILED",
+        payload={"error_code": type(error).__name__, "message": _safe_error(error)},
+        evidence_ids=[],
+        correlation_id=workflow.id,
+    )
+    db.add(AgentMessage(
+        workflow_id=workflow.id,
+        incident_id=workflow.incident_id,
+        sender_agent=contract.sender_agent,
+        receiver_agent=contract.receiver_agent,
+        message_type=contract.message_type,
+        payload=contract.payload,
+        evidence_ids=[],
+        correlation_id=contract.correlation_id,
+        sequence_number=_next_message_sequence(db, workflow.id),
+        validation_status="REJECTED",
+    ))
 
 
 def validate_evidence_ids(db: Session, incident_id: str, evidence_ids: list[str]) -> None:
@@ -496,6 +695,8 @@ def run_workflow(
     runners: dict[str, Callable[[Session, AgenticWorkflow], None]] | None = None,
     max_transitions: int = len(AGENTS),
 ) -> AgenticWorkflow:
+    if max_transitions < 1:
+        raise ValueError("max_transitions must be positive")
     active_runners = {**DEFAULT_RUNNERS, **(runners or {})}
     transitions = 0
     while transitions < max_transitions:
@@ -509,10 +710,14 @@ def run_workflow(
         agent = workflow.current_agent
         if agent not in AGENTS:
             raise ValueError("Invalid workflow agent")
+        if workflow.workflow_status not in {STATE_BY_AGENT[agent], "QUEUED", "RUNNING"}:
+            raise ValueError(f"Transition {workflow.workflow_status} -> {agent} is not authorized")
         input_summary = _input_summary(workflow)
         workflow.workflow_status = "RUNNING"
         started = time.perf_counter()
         try:
+            _consume_inbound_messages(db, workflow.id, agent)
+            execution = _start_execution(db, workflow, agent, input_summary)
             active_runners[agent](db, workflow)
             if agent in {"LOG_ANALYSIS", "CORRELATION", "RCA", "DECISION"}:
                 if workflow.evidence_ids:
@@ -522,9 +727,32 @@ def run_workflow(
                 raise WorkflowTimeoutError(f"{agent} exceeded {workflow.agent_timeout_seconds}s timeout")
             next_agent = NEXT_AGENT[agent]
             workflow.current_agent = next_agent
-            workflow.workflow_status = "WAITING_FOR_HUMAN_APPROVAL" if next_agent is None else "QUEUED"
+            workflow.workflow_status = "WAITING_FOR_HUMAN_APPROVAL" if next_agent is None else STATE_BY_AGENT[next_agent]
             workflow.last_error = None
-            _history(db, workflow, agent, "AGENT_COMPLETED", input_summary, _output_summary(workflow), duration_ms)
+            output_summary = _output_summary(workflow)
+            llm_result = optional_agent_narrative(
+                agent, AGENT_CONTRACTS[agent]["objective"], output_summary, list(workflow.evidence_ids),
+            )
+            execution.status = "COMPLETED"
+            execution.output_payload = output_summary
+            execution.working_memory = {
+                "correlation_count": len(workflow.correlations),
+                "hypothesis_count": len(workflow.hypotheses),
+                **llm_result.working_memory,
+            }
+            execution.evidence_ids = list(workflow.evidence_ids)
+            execution.validations = ["MESSAGE_CONTRACT", "EVIDENCE_REFERENCES", "NEXT_STATE"]
+            execution.duration_ms = duration_ms
+            execution.completed_at = datetime.now(timezone.utc)
+            execution.output_source = llm_result.source
+            execution.llm_provider = llm_result.provider
+            execution.llm_model = llm_result.model
+            execution.error_code = llm_result.error_code
+            _record_tools(db, execution, input_summary, output_summary, duration_ms)
+            outgoing_message = _persist_agent_message(db, workflow, agent, output_summary)
+            db.flush()
+            execution.outgoing_message_ids = [outgoing_message.id]
+            _history(db, workflow, agent, "AGENT_COMPLETED", input_summary, output_summary, duration_ms)
             db.commit()
             transitions += 1
         except Exception as error:
@@ -534,17 +762,20 @@ def run_workflow(
             workflow.last_error = _safe_error(error)
             workflow.workflow_status = "FAILED" if workflow.retry_count >= workflow.max_retries else "RETRYABLE_ERROR"
             duration_ms = max(0, round((time.perf_counter() - started) * 1000))
+            contract = AGENT_CONTRACTS[agent]
+            failed_execution = _start_execution(db, workflow, agent, input_summary)
+            failed_execution.status = "FAILED"
+            failed_execution.error_code = type(error).__name__
+            failed_execution.duration_ms = duration_ms
+            failed_execution.output_payload = {"error": _safe_error(error)}
+            failed_execution.validations = ["FAILED"]
+            failed_execution.completed_at = datetime.now(timezone.utc)
+            failed_execution.stop_condition = contract["failure"]
+            _persist_failure_message(db, workflow, agent, error)
             _history(db, workflow, agent, "AGENT_ERROR", input_summary, {}, duration_ms, error)
             db.commit()
             return workflow
-    workflow = db.get(AgenticWorkflow, workflow_id)
-    if workflow.workflow_status not in TERMINAL_STATUSES and workflow.workflow_status != "RETRYABLE_ERROR":
-        workflow.retry_count += 1
-        workflow.last_error = "Maximum transition count reached"
-        workflow.workflow_status = "FAILED" if workflow.retry_count >= workflow.max_retries else "RETRYABLE_ERROR"
-        _history(db, workflow, workflow.current_agent or "ORCHESTRATOR", "LOOP_GUARD", {}, {}, 0)
-        db.commit()
-    return workflow
+    return db.get(AgenticWorkflow, workflow_id)
 
 
 def prepare_retry(db: Session, workflow_id: str) -> AgenticWorkflow:
@@ -555,7 +786,7 @@ def prepare_retry(db: Session, workflow_id: str) -> AgenticWorkflow:
         raise ValueError("Workflow is not retryable")
     if workflow.retry_count >= workflow.max_retries:
         raise ValueError("Retry limit reached")
-    workflow.workflow_status = "QUEUED"
+    workflow.workflow_status = STATE_BY_AGENT[workflow.current_agent]
     workflow.last_error = None
     db.commit()
     return workflow

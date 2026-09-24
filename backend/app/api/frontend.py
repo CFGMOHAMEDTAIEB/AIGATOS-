@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.celery_app import celery_app
 from app.db import get_db
 from app.models import (
+    AgentMessage,
     AgenticWorkflow,
     AuditLog,
     Campaign,
@@ -31,6 +32,7 @@ from app.models import (
     SimulationStage,
     SimulationVehicle,
     SoftwarePackage,
+    ToolExecution,
     Vehicle,
     WorkflowHistory,
 )
@@ -117,6 +119,9 @@ def _context_row(db: Session, run: SimulationRun) -> dict[str, Any]:
     workflow = db.scalar(select(AgenticWorkflow).where(
         AgenticWorkflow.incident_id == incident.id,
     )) if incident else None
+    report = db.scalar(select(IncidentReport).where(
+        IncidentReport.incident_id == incident.id,
+    ).order_by(IncidentReport.version.desc())) if incident else None
     evidence_count = db.scalar(select(func.count()).select_from(IncidentEvidence).where(
         IncidentEvidence.incident_id == incident.id,
     )) if incident else 0
@@ -132,6 +137,7 @@ def _context_row(db: Session, run: SimulationRun) -> dict[str, Any]:
         "simulation_status": live.status if live else run.status,
         "incident_id": incident.id if incident else None,
         "workflow_id": workflow.id if workflow else None,
+        "report_id": report.id if report else None,
         "workflow_status": workflow.workflow_status if workflow else None,
         "approval_status": workflow.approval_status if workflow else None,
         "software_name": package.name if package else None,
@@ -150,6 +156,14 @@ def _context_row(db: Session, run: SimulationRun) -> dict[str, Any]:
         "created_at": live.created_at if live else run.created_at,
         "updated_at": live.updated_at if live else run.updated_at,
     }
+
+
+def resolve_simulation_context(db: Session, simulation_id: str) -> dict[str, Any]:
+    """Resolve only relationships that really exist in the relational model."""
+    run = db.get(SimulationRun, simulation_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Simulation context not found")
+    return _context_row(db, run)
 
 
 def _service_health() -> dict[str, str]:
@@ -348,6 +362,41 @@ def audit_history(
         } for row in db.scalars(select(WorkflowHistory).where(
             WorkflowHistory.workflow_id == context["workflow_id"],
         ).order_by(WorkflowHistory.sequence)))
+        entries.extend({
+            "id": row.id,
+            "timestamp": row.created_at,
+            "category": "AGENT",
+            "actor": row.sender_agent,
+            "action": row.message_type,
+            "status": row.validation_status,
+            "summary": f"{row.sender_agent} → {row.receiver_agent}: {row.message_type}",
+            "details": {
+                "correlation_id": row.correlation_id,
+                "sequence": row.sequence_number,
+                "receiver": row.receiver_agent,
+                "evidence_ids": row.evidence_ids,
+                "consumed_at": row.consumed_at,
+            },
+        } for row in db.scalars(select(AgentMessage).where(
+            AgentMessage.workflow_id == context["workflow_id"],
+        ).order_by(AgentMessage.sequence_number)))
+        entries.extend({
+            "id": row.id,
+            "timestamp": row.created_at,
+            "category": "AGENT",
+            "actor": row.agent_type,
+            "action": f"TOOL:{row.tool_name}",
+            "status": row.status,
+            "summary": f"{row.agent_type}: {row.tool_name} ({row.mode})",
+            "details": {
+                "agent_execution_id": row.agent_execution_id,
+                "sequence": row.sequence_number,
+                "duration_ms": row.duration_ms,
+                "mode": row.mode,
+            },
+        } for row in db.scalars(select(ToolExecution).where(
+            ToolExecution.workflow_id == context["workflow_id"],
+        ).order_by(ToolExecution.created_at, ToolExecution.sequence_number)))
     entries.sort(key=lambda item: item["timestamp"])
     return {"context": context, "entries": entries}
 
@@ -418,6 +467,35 @@ def incident_detail(incident_id: str, db: Session = Depends(get_db)) -> dict[str
     workflow = db.scalar(
         select(AgenticWorkflow).where(AgenticWorkflow.incident_id == incident.id)
     )
+    history_agents = set(db.scalars(select(WorkflowHistory.agent).where(
+        WorkflowHistory.workflow_id == workflow.id,
+    ))) if workflow else set()
+    evidence_by_event: dict[str, list[str]] = {}
+    for link in db.scalars(select(IncidentEvidence).where(IncidentEvidence.incident_id == incident.id)):
+        evidence_by_event.setdefault(link.event_id, []).append(link.id)
+    affected_vehicles = []
+    for participant in participants:
+        if participant.outcome != "failure":
+            continue
+        vehicle = db.get(Vehicle, participant.vehicle_id)
+        ecu = db.get(ECU, participant.ecu_id)
+        timeline = list(db.scalars(select(OTAEvent).where(
+            OTAEvent.simulation_id == incident.simulation_id,
+            OTAEvent.vehicle_id == participant.vehicle_id,
+        ).order_by(OTAEvent.sequence)))
+        failure = next((event for event in timeline if event.event_type == "FAILURE"), None)
+        previous = timeline[timeline.index(failure) - 1] if failure in timeline and timeline.index(failure) > 0 else None
+        affected_vehicles.append({
+            "vehicle_id": participant.vehicle_id,
+            "vin": vehicle.vin if vehicle else participant.vehicle_id,
+            "hardware_revision": ecu.hardware_version if ecu else (vehicle.hardware_version if vehicle else None),
+            "last_successful_step": previous.installation_step if previous else None,
+            "failure_step": failure.installation_step if failure else None,
+            "error_code": failure.error_code if failure else None,
+            "rolled_back": participant.rolled_back,
+            "analysis_agent": "LOG_ANALYSIS" if "LOG_ANALYSIS" in history_agents else None,
+            "evidence_ids": evidence_by_event.get(failure.event_id, []) if failure else [],
+        })
     normalized_errors = (
         [
             {
@@ -455,6 +533,11 @@ def incident_detail(incident_id: str, db: Session = Depends(get_db)) -> dict[str
             select(func.count()).select_from(IncidentEvidence).where(IncidentEvidence.incident_id == incident.id)
         ) or 0,
         "failure_event_count": len(failure_events),
+        "workflow_id": workflow.id if workflow else None,
+        "workflow_status": workflow.workflow_status if workflow else None,
+        "active_agent": workflow.current_agent if workflow else None,
+        "approval_status": workflow.approval_status if workflow else None,
+        "affected_vehicles": affected_vehicles,
         "normalized_errors": normalized_errors,
         "hardware_distribution": [
             {"hardware_revision": revision, **counts}

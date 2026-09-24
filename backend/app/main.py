@@ -10,7 +10,8 @@ from app.api.explanations import router as explanations_router
 from app.api.reports import router as reports_router
 from app.api.frontend import router as frontend_router
 from app.api.live import router as live_router
-from app.llm_config import load_llm_settings
+from app.api.llm import router as llm_router
+from app.llm_config import load_llm_settings, log_llm_settings
 from app.operation_mode import get_operation_mode
 from app.models import Campaign, ECU, SoftwarePackage, Vehicle
 from app.schemas.entities import (
@@ -22,7 +23,7 @@ from app.schemas.entities import (
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    load_llm_settings()
+    log_llm_settings(load_llm_settings())
     get_operation_mode()
     yield
 
@@ -53,3 +54,4 @@ app.include_router(explanations_router)
 app.include_router(reports_router)
 app.include_router(frontend_router)
 app.include_router(live_router)
+app.include_router(llm_router)

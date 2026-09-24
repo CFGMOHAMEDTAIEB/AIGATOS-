@@ -13,7 +13,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.llm_config import LLMSettings, redact_secrets
-from app.llm_providers import LLMProvider, ProviderResult, get_provider
+from app.llm_providers import (
+    LLMConnectTimeoutError, LLMError, LLMProvider, LLMReadTimeoutError,
+    ProviderResult, get_provider,
+)
 from app.models import (
     AgenticWorkflow, HumanApprovalRequest, Incident, IncidentEvidence,
     IncidentExplanation, LLMCallAudit,
@@ -245,17 +248,20 @@ def generate_explanation(
         system_prompt, user_prompt = prompts(context, settings.model)
         attempts = 1
         result = selected.generate(system_prompt, user_prompt)
+        attempts = result.attempt_count
         output = validate_output(db, workflow, result.content, settings)
     except Exception as error:
         source = "DETERMINISTIC_FALLBACK"
-        if isinstance(error, (TimeoutError,)) or "timeout" in type(error).__name__.lower():
+        if isinstance(error, (TimeoutError, LLMConnectTimeoutError, LLMReadTimeoutError)):
             status = "FALLBACK_TIMEOUT"
         elif isinstance(error, ExplanationValidationError):
             status = "FALLBACK_INVALID_OUTPUT"
         else:
             status = "FALLBACK_PROVIDER_ERROR"
+        if isinstance(error, LLMError):
+            attempts = error.attempt_count
         error_type = type(error).__name__[:100]
-        error_message = redact_secrets(str(error), settings)
+        error_message = error.message if isinstance(error, LLMError) else redact_secrets(str(error), settings)
         output = deterministic_fallback(workflow, settings)
     duration_ms = max(0, round((time.perf_counter() - started) * 1000))
     explanation = IncidentExplanation(

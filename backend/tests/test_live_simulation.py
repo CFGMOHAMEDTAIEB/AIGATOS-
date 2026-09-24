@@ -66,6 +66,32 @@ def test_validation_vehicle_limits_and_distribution(client):
     assert client.post("/live-simulations", json=jury_payload()).status_code == 422
 
 
+def test_validation_capacity_probability_and_nominal_rule(client):
+    payload = jury_payload(); payload["injections"][0]["affected_count"] = 31
+    response = post(client, "/live-simulations", "affected-over-fleet", payload)
+    assert response.status_code == 422
+    assert "vehicle_count" in response.text
+
+    payload = jury_payload(); payload["injections"][0]["failure_probability"] = 75
+    assert post(client, "/live-simulations", "probability-not-normalized", payload).status_code == 422
+
+    payload = jury_payload(); payload["injections"] = [{
+        "scenario": "nominal", "affected_count": 1, "target_hardware_revision": "ANY",
+        "error_code": None, "installation_step": "SUCCESS", "failure_probability": 1,
+    }]
+    assert post(client, "/live-simulations", "invalid-nominal", payload).status_code == 422
+
+
+def test_targeted_rule_sum_cannot_exceed_fleet(client):
+    payload = jury_payload()
+    for rule in payload["injections"]:
+        rule["affected_count"] = 10
+        rule["target_hardware_revision"] = "ANY"
+    response = post(client, "/live-simulations", "target-sum", payload)
+    assert response.status_code == 422
+    assert "sum of targeted vehicles" in response.text
+
+
 def test_jury_session_is_idempotent_isolated_and_runs_full_workflow(client):
     created = post(client, "/live-simulations", "create-jury-session", jury_payload())
     assert created.status_code == 201
@@ -149,3 +175,39 @@ def test_maturity_never_reaches_m5_and_live_decision_executes_nothing(client):
         "timestamp": "2026-09-23T20:00:00Z", "simulation_only_confirmed": True,
     }).json()
     assert repeated["decision_recorded"] is True and repeated["executed"] is False
+
+
+def test_operational_context_is_the_single_source_of_truth(client):
+    session = post(client, "/live-simulations", "context-create", jury_payload("Operational Context")).json()
+    started = post(client, f"/live-simulations/{session['id']}/start", "context-start").json()
+    investigated = post(client, f"/live-simulations/{session['id']}/investigation", "context-investigate").json()
+
+    contexts = client.get("/api/v1/ui/contexts?scope=live").json()
+    context = next(row for row in contexts if row["simulation_id"] == session["simulation_id"])
+    resolved = client.get(f"/api/v1/frontend/contexts/simulations/{session['simulation_id']}").json()
+    dashboard = client.get(f"/api/v1/ui/dashboard?simulation_id={session['simulation_id']}&scope=all").json()
+    incident = client.get(f"/api/v1/ui/incidents/{started['incident_id']}").json()
+    workflow = client.get(f"/workflows/{investigated['workflow_id']}").json()
+    vehicles = client.get(f"/api/v1/ui/vehicles?simulation_id={session['simulation_id']}&limit=100").json()
+    audit = client.get(f"/api/v1/ui/audit?simulation_id={session['simulation_id']}").json()
+
+    expected = {
+        "vehicle_count": 30, "success_count": 24, "failure_count": 6,
+        "rollback_count": 3, "failure_rate": 0.2,
+    }
+    assert {key: context[key] for key in expected} == expected
+    assert dashboard["active_context"]["simulation_id"] == session["simulation_id"]
+    assert {key: dashboard[key if key != "vehicle_count" else "tracked_vehicle_count"] for key in expected} == expected
+    assert {key: incident[key] for key in expected} == expected
+    assert context["incident_id"] == started["incident_id"]
+    assert context["workflow_id"] == investigated["workflow_id"]
+    assert context["evidence_count"] == len(workflow["evidence_ids"])
+    assert context["workflow_status"] == workflow["workflow_status"] == "WAITING_FOR_HUMAN_APPROVAL"
+    assert context["approval_status"] == workflow["approval_status"] == "PENDING"
+    assert context["actions_executed"] == 0
+    assert resolved == context
+    assert vehicles["total"] == 30
+    assert audit["context"]["simulation_id"] == session["simulation_id"]
+    assert {entry["action"] for entry in audit["entries"]} >= {
+        "LIVE_SESSION_CREATED", "LIVE_SIMULATION_STARTED", "LIVE_INVESTIGATION_STARTED", "AGENT_COMPLETED",
+    }

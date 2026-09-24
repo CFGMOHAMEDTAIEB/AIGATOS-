@@ -23,7 +23,7 @@ kaggle.json
 # Downloaded and derived datasets are local artifacts.
 datasets/raw/
 datasets/processed/
-models/
+/models/
 
 # Frontend generated artifacts and local Vite environment files.
 frontend/node_modules/

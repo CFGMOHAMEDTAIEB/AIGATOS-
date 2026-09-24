@@ -3,7 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import AgenticWorkflow, HumanApprovalRequest, Incident, IncidentEvidence, OTAEvent, WorkflowHistory
+from app.models import (
+    AgentExecution, AgentMessage, AgenticWorkflow, HumanApprovalRequest, Incident,
+    IncidentEvidence, OTAEvent, ToolExecution, WorkflowHistory,
+)
 from app.schemas.workflow import HumanDecision
 from app.services.agentic_workflow import create_workflow, prepare_retry, record_human_decision, workflow_state
 from app.tasks import run_investigation
@@ -62,6 +65,54 @@ def get_history(workflow_id: str, db: Session = Depends(get_db)) -> list[dict]:
         "output_summary": row.output_summary, "duration_ms": row.duration_ms,
         "error_type": row.error_type, "error_message": row.error_message,
         "created_at": row.created_at,
+    } for row in rows]
+
+
+@router.get("/workflows/{workflow_id}/executions")
+def get_executions(workflow_id: str, db: Session = Depends(get_db)) -> list[dict]:
+    _get_workflow(db, workflow_id)
+    rows = list(db.scalars(select(AgentExecution).where(
+        AgentExecution.workflow_id == workflow_id,
+    ).order_by(AgentExecution.created_at, AgentExecution.agent_type, AgentExecution.attempt)))
+    return [{
+        "id": row.id, "agent_type": row.agent_type, "objective": row.objective,
+        "status": row.status, "tools_allowed": row.tools_allowed, "tools_used": row.tools_used,
+        "input_payload": row.input_payload, "output_payload": row.output_payload,
+        "evidence_ids": row.evidence_ids, "incoming_message_ids": row.incoming_message_ids,
+        "outgoing_message_ids": row.outgoing_message_ids, "validations": row.validations,
+        "attempt": row.attempt, "duration_ms": row.duration_ms,
+        "proposed_next_state": row.proposed_next_state, "output_source": row.output_source,
+        "error_code": row.error_code, "created_at": row.created_at, "completed_at": row.completed_at,
+    } for row in rows]
+
+
+@router.get("/workflows/{workflow_id}/messages")
+def get_messages(workflow_id: str, db: Session = Depends(get_db)) -> list[dict]:
+    _get_workflow(db, workflow_id)
+    rows = list(db.scalars(select(AgentMessage).where(
+        AgentMessage.workflow_id == workflow_id,
+    ).order_by(AgentMessage.sequence_number)))
+    return [{
+        "id": row.id, "sender_agent": row.sender_agent, "receiver_agent": row.receiver_agent,
+        "message_type": row.message_type, "payload": row.payload,
+        "evidence_ids": row.evidence_ids, "correlation_id": row.correlation_id,
+        "sequence_number": row.sequence_number, "validation_status": row.validation_status,
+        "created_at": row.created_at, "consumed_at": row.consumed_at,
+    } for row in rows]
+
+
+@router.get("/workflows/{workflow_id}/tools")
+def get_tool_executions(workflow_id: str, db: Session = Depends(get_db)) -> list[dict]:
+    _get_workflow(db, workflow_id)
+    rows = list(db.scalars(select(ToolExecution).where(
+        ToolExecution.workflow_id == workflow_id,
+    ).order_by(ToolExecution.created_at, ToolExecution.sequence_number)))
+    return [{
+        "id": row.id, "agent_execution_id": row.agent_execution_id,
+        "agent_type": row.agent_type, "tool_name": row.tool_name, "mode": row.mode,
+        "input_payload": row.input_payload, "output_payload": row.output_payload,
+        "status": row.status, "duration_ms": row.duration_ms,
+        "sequence_number": row.sequence_number, "created_at": row.created_at,
     } for row in rows]
 
 

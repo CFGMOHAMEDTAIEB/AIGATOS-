@@ -10,13 +10,29 @@ export class ApiError extends Error {
   }
 }
 
+function apiDetail(body: unknown, fallback: string): string {
+  if (!body || typeof body !== 'object' || !('detail' in body)) return fallback
+  const detail = (body as {detail?:unknown}).detail
+  if (typeof detail === 'string') return detail
+  if (detail && typeof detail === 'object') {
+    const safe=detail as {code?:unknown;message?:unknown}
+    if (typeof safe.message === 'string') return `${safe.message}${typeof safe.code === 'string' ? ` (${safe.code})` : ''}`
+  }
+  if (Array.isArray(detail)) return detail.map(item => {
+    if (!item || typeof item !== 'object') return String(item)
+    const issue=item as {loc?:unknown[];msg?:string}
+    const field=issue.loc?.filter(value=>value!=='body').join('.')
+    return `${field ? `${field}: ` : ''}${issue.msg??'valeur invalide'}`
+  }).join(' · ')
+  return fallback
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(backendUrl(path), { headers: { Accept: 'application/json' } })
   if (!response.ok) {
     let detail = `Erreur API (${response.status})`
     try {
-      const body = await response.json() as { detail?: string }
-      detail = body.detail ?? detail
+      detail = apiDetail(await response.json(), detail)
     } catch {
       // The generic status-only message is deliberately retained.
     }
@@ -33,7 +49,7 @@ export async function apiPost<T>(path: string, body: unknown, idempotencyKey: st
   })
   if (!response.ok) {
     let detail = `Erreur API (${response.status})`
-    try { detail = (await response.json() as {detail?:string}).detail ?? detail } catch { /* status only */ }
+    try { detail = apiDetail(await response.json(), detail) } catch { /* status only */ }
     throw new ApiError(response.status, detail)
   }
   return response.json() as Promise<T>
@@ -41,10 +57,13 @@ export async function apiPost<T>(path: string, body: unknown, idempotencyKey: st
 
 export const endpoints = {
   capabilities: '/frontend/capabilities',
+  configurationDraft: '/frontend/configuration-drafts',
+  simulationContext: (id:string) => `/api/v1/frontend/contexts/simulations/${encodeURIComponent(id)}`,
   liveSimulation: (id?:string) => id ? `/live-simulations/${encodeURIComponent(id)}` : '/live-simulations',
   liveStart: (id:string) => `/live-simulations/${encodeURIComponent(id)}/start`,
   liveEvents: (id:string) => `/live-simulations/${encodeURIComponent(id)}/events`,
   liveInvestigation: (id:string) => `/live-simulations/${encodeURIComponent(id)}/investigation`,
+  investigation: (id:string) => `/incidents/${encodeURIComponent(id)}/investigations`,
   liveWorkflow: (id:string) => `/live-simulations/${encodeURIComponent(id)}/workflow`,
   liveDecision: (id:string) => `/live-simulations/${encodeURIComponent(id)}/decision`,
   agentMaturity: '/agent-maturity',
@@ -59,6 +78,11 @@ export const endpoints = {
   evidence: (id: string) => `/incidents/${encodeURIComponent(id)}/evidence`,
   workflow: (id: string) => `/workflows/${encodeURIComponent(id)}`,
   workflowHistory: (id: string) => `/workflows/${encodeURIComponent(id)}/history`,
+  workflowExecutions: (id: string) => `/workflows/${encodeURIComponent(id)}/executions`,
+  workflowMessages: (id: string) => `/workflows/${encodeURIComponent(id)}/messages`,
+  workflowTools: (id: string) => `/workflows/${encodeURIComponent(id)}/tools`,
+  llmStatus: '/api/v1/llm/status',
   reports: (id: string) => `/api/v1/ui/incidents/${encodeURIComponent(id)}/reports`,
+  createReport: (id:string) => `/incidents/${encodeURIComponent(id)}/reports`,
   explanation: (id: string) => `/api/v1/ui/incidents/${encodeURIComponent(id)}/explanation`,
 }

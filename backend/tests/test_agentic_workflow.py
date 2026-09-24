@@ -8,9 +8,11 @@ from sqlalchemy import func, select
 from app.db import get_db
 from app.main import app
 from app.models import (
-    AgenticWorkflow, Campaign, HumanApprovalRequest, Incident, SimulationRun,
-    SimulationStage, WorkflowHistory,
+    AgentExecution, AgentMessage, AgenticWorkflow, Campaign, HumanApprovalRequest,
+    Incident, SimulationRun, SimulationStage, ToolExecution, WorkflowHistory,
 )
+from app.schemas.agents import ToolInvocation
+from app.services.agent_tools import ToolAuthorizationError, authorize_tool
 from app.services.agentic_workflow import (
     AGENTS, EvidenceValidationError, create_workflow, prepare_retry,
     run_workflow, validate_evidence_ids, validate_hypotheses,
@@ -93,6 +95,23 @@ def test_complete_five_agent_chain_is_idempotent_and_advisory(client, monkeypatc
         ).order_by(WorkflowHistory.sequence)))
         assert [item.agent for item in history] == list(AGENTS)
         assert all(item.event_type == "AGENT_COMPLETED" for item in history)
+        executions = list(db.scalars(select(AgentExecution).where(
+            AgentExecution.workflow_id == workflow.id,
+        ).order_by(AgentExecution.created_at)))
+        messages = list(db.scalars(select(AgentMessage).where(
+            AgentMessage.workflow_id == workflow.id,
+        ).order_by(AgentMessage.sequence_number)))
+        tools = list(db.scalars(select(ToolExecution).where(ToolExecution.workflow_id == workflow.id)))
+        assert [item.agent_type for item in executions] == list(AGENTS)
+        assert [item.sequence_number for item in messages] == [1, 2, 3, 4, 5]
+        assert [item.message_type for item in messages] == [
+            "INCIDENT_DETECTED", "LOG_SUMMARY_READY", "CORRELATION_READY",
+            "RCA_READY", "HUMAN_APPROVAL_REQUIRED",
+        ]
+        assert all(item.validation_status == "VALIDATED" for item in messages)
+        assert all(item.evidence_ids for item in messages)
+        assert all(item.output_source == "DETERMINISTIC" for item in executions)
+        assert tools and all(item.mode in {"READ_ONLY", "INTERNAL_WRITE"} for item in tools)
 
         again, was_created = create_workflow(db, incident_id)
         assert not was_created and again.id == workflow.id
@@ -211,3 +230,10 @@ def test_phase_3b_has_no_llm_or_operational_model_dependency():
     forbidden_imports = ("import openai", "import langgraph", "import joblib", "from ml", "from sklearn")
     assert not any(value in source for value in forbidden_imports)
     assert "anomaly_score is not none" in source
+
+
+def test_tool_registry_rejects_cross_agent_invocation():
+    with pytest.raises(ToolAuthorizationError):
+        authorize_tool(ToolInvocation(
+            agent_type="DECISION", tool_name="calculate_risk_ratio", input_payload={},
+        ))

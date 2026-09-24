@@ -1,4 +1,4 @@
-# AIGATOS — phases 1 et 2
+# AIGATOS — plateforme d’opérations OTA contrôlées
 
 API FastAPI pour les véhicules, ECU, packages logiciels et campagnes OTA. Les campagnes restent en statut `draft`. Aucune route de déploiement ou action critique n'est présente.
 
@@ -263,11 +263,15 @@ Endpoints :
 
 Une entrée possédant le même hash d'entrée est renvoyée depuis le cache sans régénération. Une modification du template ou des données validées crée une version explicitement numérotée. Le PDF final de la démonstration est la version 2, produite après contrôle visuel des quatre pages.
 
-## Phase 5 — interface Web AIGATOS
+## Interface Web AIGATOS
 
 Le frontend React/TypeScript est situé dans `D:\AIGATOS\frontend`. Il utilise Material UI, React Router, TanStack Query et Recharts. Toutes les données proviennent de FastAPI : le navigateur n'accède jamais directement à PostgreSQL ou Redis. La projection `/api/v1/ui/*` est strictement en lecture seule et CORS n'autorise que `http://127.0.0.1:5173` et `http://localhost:5173`.
 
-L'interface couvre le tableau de bord, les campagnes et leur progression Canary, le parc de véhicules, l'incident Phase 3, le workflow agentique, les recommandations, la validation humaine, les rapports et l'explication contrôlée. La région n'existant pas dans le schéma actuel, elle apparaît comme « Non renseignée ». Le mode démonstration ouvre un dialogue de confirmation mais désactive toujours l'envoi ; aucun appel aux endpoints `approve`, `reject`, `advance` ou de génération LLM n'est effectué.
+L’interface est organisée autour de huit fonctions : Tableau de bord, Campagnes, Véhicules, Simulation, Incidents, Analyse agentique, Rapports et Audit. Un contexte opérationnel global conserve la campagne, la simulation, l’incident et le workflow sélectionnés pendant la navigation. Les écrans utilisent les mêmes projections PostgreSQL via FastAPI ; aucune valeur métier n’est reconstruite localement.
+
+L’analyse agentique consolide la chaîne Monitoring → Log Analysis → Correlation → RCA → Decision, les transmissions structurées, l’état partagé, les preuves et les recommandations consultatives. La maturité est affichée sur une échelle discrète M0–M5 ; M4 signifie uniquement « fonctionnement validé en environnement simulé » et M5 reste non atteint. Aucun contrôle de replay, animation artificielle, approbation ou exécution OTA n’est exposé.
+
+La région n’existant pas dans le schéma actuel, elle apparaît comme « Non renseignée ». Les écritures de simulation restent explicites, idempotentes et séparées des données historiques. Aucun appel aux endpoints `approve`, `reject`, `advance` ou de génération LLM n’est effectué par les écrans consultatifs.
 
 ### Démarrage local sous PowerShell
 
@@ -318,16 +322,15 @@ $env:PYTHONPATH = 'D:\AIGATOS\backend'
 
 La Phase 5 reste consultative : aucune approbation, action corrective, exécution OTA, progression vers Canary 3 ou relance LLM n'est disponible depuis le frontend.
 
-### Replay des interactions agentiques
+### Analyse agentique consolidée
 
-La route `/workflows/{workflow_id}/interaction` présente une relecture animée et strictement locale du workflow persistant. Elle conserve l'ordre `Monitoring → Log Analysis → Correlation → RCA → Decision → Human Approval`, montre les entrées et sorties structurées, les champs transférés, l'état partagé et la traçabilité des preuves. Les commandes Replay, Pause, Précédent, Suivant, Recommencer et vitesse `0.5× / 1× / 2×` ne déclenchent aucune écriture : seules les API FastAPI en lecture (`GET`) sont utilisées.
+La route `/analysis` présente l’exécution persistante du contexte actif. Les cinq agents, leurs statuts et durées, les transmissions, le Shared Incident State, les hypothèses RCA, les preuves et les actions proposées sont lus depuis FastAPI. Les anciennes URL de workflow redirigent vers cette vue consolidée afin d’éviter plusieurs écrans concurrents pour un même état.
 
-Le niveau affiché est volontairement limité à **M4 — Advanced Simulation**. L'écran rappelle qu'il ne s'agit ni d'un déploiement automobile réel, ni d'un système certifié ISO, et qu'aucune maturité M5 n'est revendiquée.
+Audit de cohérence en lecture seule, après démarrage de l’API :
 
-Pour le workflow de démonstration :
-
-```text
-http://127.0.0.1:5173/workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/interaction
+```powershell
+Set-Location -LiteralPath 'D:\AIGATOS'
+& 'D:\AIGATOS\.venv\Scripts\python.exe' 'D:\AIGATOS\demo\verify_ui_consistency.py'
 ```
 
 ### Démonstrations vidéo
@@ -407,6 +410,3 @@ $env:PYTHONPYCACHEPREFIX = 'D:\AIGATOS\data\pycache'
 $env:AIGATOS_OPERATION_MODE = 'live_simulation'
 & 'D:\AIGATOS\.venv\Scripts\python.exe' -m uvicorn app.main:app --app-dir 'D:\AIGATOS\backend' --host 127.0.0.1 --port 8000
 ```
-#   A I G A T O S -  
- #   A I G A T O S -  
- 

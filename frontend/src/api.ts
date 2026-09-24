@@ -86,5 +86,6 @@ export const endpoints = {
   llmStatus: '/api/v1/llm/status',
   reports: (id: string) => `/api/v1/ui/incidents/${encodeURIComponent(id)}/reports`,
   createReport: (id:string) => `/incidents/${encodeURIComponent(id)}/reports`,
+  createExplanation: (id:string) => `/incidents/${encodeURIComponent(id)}/explanations`,
   explanation: (id: string) => `/api/v1/ui/incidents/${encodeURIComponent(id)}/explanation`,
 }

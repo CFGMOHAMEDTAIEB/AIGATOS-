@@ -16,6 +16,7 @@ PROVIDER_ENV = {
     "nvidia": ("NVIDIA_API_KEY", "NVIDIA_BASE_URL", "NVIDIA_MODEL"),
     "google": ("GOOGLE_API_KEY", "GOOGLE_BASE_URL", "GOOGLE_MODEL"),
     "openai": ("OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL"),
+    "ollama": ("OLLAMA_API_KEY", "OLLAMA_BASE_URL", "OLLAMA_MODEL"),
     "deepseek": ("DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL", "DEEPSEEK_MODEL"),
     "kimi": ("KIMI_API_KEY", "KIMI_BASE_URL", "KIMI_MODEL"),
 }
@@ -23,6 +24,7 @@ PROVIDER_DEFAULTS: dict[str, tuple[str | None, str | None]] = {
     "nvidia": ("https://integrate.api.nvidia.com/v1", "z-ai/glm-5.3-flash"),
     "google": ("https://generativelanguage.googleapis.com/v1beta/openai/", None),
     "openai": ("https://api.openai.com/v1", "gpt-4.1-mini"),
+    "ollama": ("https://ollama.com/v1", None),
     "deepseek": ("https://api.deepseek.com/v1", None),
     "kimi": ("https://api.moonshot.ai/v1", None),
 }

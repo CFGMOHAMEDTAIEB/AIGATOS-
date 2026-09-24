@@ -43,7 +43,7 @@ def simulation_context(simulation_id: str, db: Session = Depends(get_db)) -> dic
 def configuration_draft(payload: ConfigurationDraftRequest) -> dict:
     """Translate text to a validated draft; deliberately performs no database write."""
     try:
-        draft, metadata = generate_configuration_draft(payload.prompt)
+        draft, metadata = generate_configuration_draft(payload.prompt, payload.current_draft)
     except ConfigurationAssistantError as error:
         raise HTTPException(status_code=503, detail=error.detail or {"code":"LLM_CONFIGURATION_ERROR","message":str(error),"retryable":False}) from error
     return {"draft": draft.model_dump(mode="json"), "metadata": metadata}

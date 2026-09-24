@@ -56,3 +56,17 @@ def test_openai_provider_can_be_selected_without_network(monkeypatch):
     assert settings.configured
     assert settings.provider == "openai"
     assert settings.base_url == "https://api.openai.com/v1"
+
+
+def test_ollama_cloud_provider_can_be_selected_without_network(monkeypatch):
+    monkeypatch.setenv("LLM_ENABLED", "true")
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("OLLAMA_API_KEY", "test-only-secret")
+    monkeypatch.setenv("OLLAMA_MODEL", "test-model")
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+
+    settings = load_llm_settings(load_local_env=False)
+
+    assert settings.configured
+    assert settings.provider == "ollama"
+    assert settings.base_url == "https://ollama.com/v1"

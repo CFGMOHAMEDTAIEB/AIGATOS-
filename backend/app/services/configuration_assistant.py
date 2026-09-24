@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from app.llm_config import LLMConfigurationError, load_llm_settings, redact_secrets
 from app.llm_providers import LLMError, get_provider
@@ -22,6 +23,8 @@ Allowed Canary strategies: {canary_strategies}. Probabilities are numbers from 0
 Return keys: created_by, seed, campaign, fleet, injections. Each injection uses exactly one of
 affected_count or affected_percentage. HW_REV_A + HW_REV_B must equal vehicle_count.
 Use conservative defaults for details the user omitted, but do not invent extra failure rules.
+When CURRENT_DRAFT is supplied, preserve every value the user did not explicitly ask to change.
+Never replace the existing campaign or fleet with defaults when editing an existing draft.
 """
 
 
@@ -39,7 +42,20 @@ def _json_object(content: str) -> dict:
     return decoded
 
 
-def generate_configuration_draft(prompt: str) -> tuple[LiveSimulationDraft, dict]:
+def _leaf_values(value: dict, prefix: str = "") -> dict[str, object]:
+    result = {}
+    for key, item in value.items():
+        path = ".".join(part for part in (prefix, key) if part)
+        if isinstance(item, dict):
+            result.update(_leaf_values(item, path))
+        else:
+            result[path] = item
+    return result
+
+
+def generate_configuration_draft(
+    prompt: str, current_draft: LiveSimulationDraft | None = None,
+) -> tuple[LiveSimulationDraft, dict]:
     """Generate and deterministically validate a draft. This function has no database access."""
     try:
         settings = load_llm_settings()
@@ -54,8 +70,27 @@ def generate_configuration_draft(prompt: str) -> tuple[LiveSimulationDraft, dict
         package_types=", ".join(sorted(PACKAGE_TYPES)),
         canary_strategies=", ".join(sorted(CANARY_STRATEGIES)),
     )
+    user_prompt = prompt
+    temperature_only = bool(
+        current_draft
+        and re.search(r"temp(?:erature|Ã©rature|[eÃ©]rature)?", prompt, re.IGNORECASE)
+        and not re.search(r"campaign|campagne|fleet|flotte|scenario|scÃ©nario|injection|version|package|vÃ©hicule", prompt, re.IGNORECASE)
+    )
+    if temperature_only and not re.search(
+        r"-?\d+(?:[.,]\d+)?\s*(?:°\s*c|°c|celsius|degrees?|degrés?)\b",
+        prompt, re.IGNORECASE,
+    ):
+        raise ConfigurationAssistantError(
+            "Précisez la température à tester en °C, par exemple 38 °C. Aucun brouillon n’a été généré."
+        )
+    if current_draft is not None:
+        user_prompt = json.dumps({
+            "request": prompt,
+            "CURRENT_DRAFT": current_draft.model_dump(mode="json"),
+            "instruction": "Return the complete updated draft. Keep all unrequested values exactly unchanged.",
+        }, ensure_ascii=False)
     try:
-        result, draft = get_provider(settings).generate_structured(system, prompt, LiveSimulationDraft)
+        result, draft = get_provider(settings).generate_structured(system, user_prompt, LiveSimulationDraft)
     except LLMError as error:
         raise ConfigurationAssistantError(error.message, error.public()) from error
     except Exception as error:
@@ -64,6 +99,14 @@ def generate_configuration_draft(prompt: str) -> tuple[LiveSimulationDraft, dict
             {"code": "LLM_INTERNAL_ERROR", "message": "Une erreur interne sûre a interrompu l'assistant LLM.",
              "provider": settings.provider, "model": settings.model, "retryable": False},
         ) from error
+    if temperature_only and current_draft is not None:
+        before = _leaf_values(current_draft.model_dump(mode="json"))
+        after = _leaf_values(draft.model_dump(mode="json"))
+        changed = {path for path in before if before[path] != after.get(path)}
+        if not changed.issubset({"fleet.temperature_c"}):
+            raise ConfigurationAssistantError(
+                "La demande porte uniquement sur la température, mais la réponse a modifié d’autres champs. Réessayez sans appliquer ce brouillon."
+            )
     return draft, {
         "provider": settings.provider,
         "model": settings.model,

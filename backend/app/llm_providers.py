@@ -143,8 +143,9 @@ class GoogleProvider(OpenAICompatibleProvider): pass
 class DeepSeekProvider(OpenAICompatibleProvider): pass
 class KimiProvider(OpenAICompatibleProvider): pass
 class OpenAIProvider(OpenAICompatibleProvider): pass
+class OllamaProvider(OpenAICompatibleProvider): pass
 
-PROVIDER_REGISTRY:dict[str,Callable[[LLMSettings],LLMProvider]]={"nvidia":NvidiaProvider,"google":GoogleProvider,"openai":OpenAIProvider,"deepseek":DeepSeekProvider,"kimi":KimiProvider}
+PROVIDER_REGISTRY:dict[str,Callable[[LLMSettings],LLMProvider]]={"nvidia":NvidiaProvider,"google":GoogleProvider,"openai":OpenAIProvider,"ollama":OllamaProvider,"deepseek":DeepSeekProvider,"kimi":KimiProvider}
 
 
 def get_provider(settings:LLMSettings,registry:dict[str,Callable[[LLMSettings],LLMProvider]]|None=None)->LLMProvider:

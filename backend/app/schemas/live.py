@@ -127,6 +127,7 @@ class LiveSimulationCreate(LiveSimulationDraft):
 class ConfigurationDraftRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str = Field(min_length=10, max_length=4000)
+    current_draft: LiveSimulationDraft | None = None
 
 
 class LiveDecision(BaseModel):

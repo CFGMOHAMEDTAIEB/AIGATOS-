@@ -10,6 +10,15 @@ Requires-Dist: sqlalchemy<3,>=2.0
 Requires-Dist: alembic<2,>=1.13
 Requires-Dist: psycopg[binary]<4,>=3.2
 Requires-Dist: celery[redis]<6,>=5.5
+Requires-Dist: openai<3,>=2
+Requires-Dist: python-dotenv<2,>=1
+Requires-Dist: reportlab<6,>=5
+Requires-Dist: pypdf<7,>=6
+Requires-Dist: pdfplumber<1,>=0.11
 Provides-Extra: test
 Requires-Dist: pytest<10,>=8; extra == "test"
 Requires-Dist: httpx<1,>=0.27; extra == "test"
+Provides-Extra: ml
+Requires-Dist: scikit-learn<2,>=1.9; extra == "ml"
+Requires-Dist: pandas<4,>=3; extra == "ml"
+Requires-Dist: matplotlib<4,>=3.11; extra == "ml"

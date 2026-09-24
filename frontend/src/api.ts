@@ -81,6 +81,8 @@ export const endpoints = {
   workflowExecutions: (id: string) => `/workflows/${encodeURIComponent(id)}/executions`,
   workflowMessages: (id: string) => `/workflows/${encodeURIComponent(id)}/messages`,
   workflowTools: (id: string) => `/workflows/${encodeURIComponent(id)}/tools`,
+  workflowEvents: (id: string, after=0) => `/workflows/${encodeURIComponent(id)}/events?after=${after}`,
+  workflowStream: (id: string) => `/workflows/${encodeURIComponent(id)}/stream`,
   llmStatus: '/api/v1/llm/status',
   reports: (id: string) => `/api/v1/ui/incidents/${encodeURIComponent(id)}/reports`,
   createReport: (id:string) => `/incidents/${encodeURIComponent(id)}/reports`,

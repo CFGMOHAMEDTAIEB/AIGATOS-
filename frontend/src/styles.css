@@ -2,6 +2,8 @@
 html{scroll-behavior:smooth}
 body{margin:0;min-width:320px}
 a{overflow-wrap:anywhere}
+:focus-visible{outline:3px solid #0b63ce!important;outline-offset:3px!important}
+button:disabled{cursor:not-allowed}
 ::selection{background:#cfe1ff;color:#081525}
 .app-drawer{height:100%;color:#dce8f3;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 20% 0%,rgba(37,99,235,.26),transparent 26%),linear-gradient(180deg,#081525 0%,#0b1c2f 56%,#07121f 100%)}
 .brand-block{padding:30px 25px 24px}

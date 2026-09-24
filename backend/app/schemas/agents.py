@@ -8,9 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 AgentType = Literal["MONITORING", "LOG_ANALYSIS", "CORRELATION", "RCA", "DECISION", "HUMAN", "ORCHESTRATOR"]
 MessageType = Literal[
     "INCIDENT_DETECTED",
-    "LOG_SUMMARY_READY",
-    "CORRELATION_READY",
-    "RCA_READY",
+    "NORMALIZED_FAILURES_READY",
+    "CORRELATIONS_READY",
+    "ROOT_CAUSES_READY",
     "RECOMMENDATION_PROPOSED",
     "HUMAN_APPROVAL_REQUIRED",
     "VALIDATION_FAILED",
@@ -19,9 +19,10 @@ MessageType = Literal[
 
 REQUIRED_PAYLOAD_FIELDS: dict[str, frozenset[str]] = {
     "INCIDENT_DETECTED": frozenset({"failed_vehicle_count", "successful_vehicle_count"}),
-    "LOG_SUMMARY_READY": frozenset({"normalized_error_count", "timeline_count"}),
-    "CORRELATION_READY": frozenset({"correlation_count"}),
-    "RCA_READY": frozenset({"hypothesis_count", "global_confidence"}),
+    "NORMALIZED_FAILURES_READY": frozenset({"normalized_error_count", "timeline_count"}),
+    "CORRELATIONS_READY": frozenset({"correlation_count"}),
+    "ROOT_CAUSES_READY": frozenset({"hypothesis_count", "global_confidence"}),
+    "RECOMMENDATION_PROPOSED": frozenset({"recommended_action_count"}),
     "RECOMMENDATION_PROPOSED": frozenset({"recommended_action_count"}),
     "HUMAN_APPROVAL_REQUIRED": frozenset({"recommended_action_count", "approval_status"}),
     "VALIDATION_FAILED": frozenset({"error_code"}),
@@ -80,3 +81,4 @@ class ToolOutputPayload(BaseModel):
     recommended_action_count: int = Field(default=0, ge=0)
     global_confidence: float | None = Field(default=None, ge=0, le=1)
     approval_status: str
+    result: dict[str, Any] = Field(default_factory=dict)

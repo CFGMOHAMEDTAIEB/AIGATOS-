@@ -18,13 +18,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import (
-    AgentExecution, AgentMessage, AgenticWorkflow, Campaign, HumanApprovalRequest, Incident, IncidentEvidence,
+    AgentEvent, AgentExecution, AgentMessage, AgenticWorkflow, Campaign, HumanApprovalRequest, Incident, IncidentEvidence,
     OTAEvent, SimulationRun, SimulationStage, SimulationVehicle, SoftwarePackage,
     ToolExecution, WorkflowHistory,
 )
 from app.schemas.agents import AgentMessageContract, ToolInvocation
-from app.services.agent_llm import optional_agent_narrative
-from app.services.agent_tools import AGENT_TOOLS, authorize_tool
+from app.services.agent_llm import choose_agent_tool, optional_agent_narrative
+from app.services.agent_tools import AGENT_TOOLS, PRIMARY_STAGE_TOOLS, authorize_tool, execute_stage_tool
 
 
 AGENTS = ("MONITORING", "LOG_ANALYSIS", "CORRELATION", "RCA", "DECISION")
@@ -79,11 +79,18 @@ AGENT_CONTRACTS = {
 
 MESSAGE_BY_AGENT = {
     "MONITORING": ("LOG_ANALYSIS", "INCIDENT_DETECTED"),
-    "LOG_ANALYSIS": ("CORRELATION", "LOG_SUMMARY_READY"),
-    "CORRELATION": ("RCA", "CORRELATION_READY"),
-    "RCA": ("DECISION", "RCA_READY"),
+    "LOG_ANALYSIS": ("CORRELATION", "NORMALIZED_FAILURES_READY"),
+    "CORRELATION": ("RCA", "CORRELATIONS_READY"),
+    "RCA": ("DECISION", "ROOT_CAUSES_READY"),
     "DECISION": ("HUMAN", "HUMAN_APPROVAL_REQUIRED"),
 }
+EXPECTED_INBOUND = {
+    "LOG_ANALYSIS": ("MONITORING", "INCIDENT_DETECTED"),
+    "CORRELATION": ("LOG_ANALYSIS", "NORMALIZED_FAILURES_READY"),
+    "RCA": ("CORRELATION", "CORRELATIONS_READY"),
+    "DECISION": ("RCA", "ROOT_CAUSES_READY"),
+}
+PRIMARY_TOOL_BY_AGENT = PRIMARY_STAGE_TOOLS
 
 
 class EvidenceValidationError(ValueError):
@@ -213,6 +220,20 @@ def _next_message_sequence(db: Session, workflow_id: str) -> int:
     return (current or 0) + 1
 
 
+def _persist_event(db: Session, workflow: AgenticWorkflow, event_type: str, payload: dict) -> AgentEvent:
+    current = db.scalar(select(func.max(AgentEvent.sequence_number)).where(AgentEvent.workflow_id == workflow.id))
+    event = AgentEvent(
+        workflow_id=workflow.id,
+        incident_id=workflow.incident_id,
+        event_type=event_type,
+        sequence_number=(current or 0) + 1,
+        payload=payload,
+    )
+    db.add(event)
+    db.flush()
+    return event
+
+
 def _start_execution(db: Session, workflow: AgenticWorkflow, agent: str, input_summary: dict) -> AgentExecution:
     contract = AGENT_CONTRACTS[agent]
     attempt = db.scalar(select(func.max(AgentExecution.attempt)).where(
@@ -225,6 +246,14 @@ def _start_execution(db: Session, workflow: AgenticWorkflow, agent: str, input_s
         agent_type=agent,
         objective=contract["objective"],
         status="RUNNING",
+        current_state="OBSERVE",
+        observation=input_summary,
+        plan={},
+        selected_tool=None,
+        tool_call_ids=[],
+        validation_result={},
+        runtime_retry_count=0,
+        stop_reason=None,
         authorized_context={"workflow_id": workflow.id, "incident_id": workflow.incident_id},
         tools_allowed=list(AGENT_TOOLS[agent]),
         tools_used=[],
@@ -261,69 +290,157 @@ def _consume_inbound_messages(db: Session, workflow_id: str, agent: str) -> None
         message.consumed_at = now
 
 
-def _record_tools(
+def _validate_inbound_messages(db: Session, workflow: AgenticWorkflow, agent: str) -> list[AgentMessage]:
+    expected = EXPECTED_INBOUND.get(agent)
+    if expected is None:
+        return []
+    sender, message_type = expected
+    messages = list(db.scalars(select(AgentMessage).where(
+        AgentMessage.workflow_id == workflow.id,
+        AgentMessage.sender_agent == sender,
+        AgentMessage.receiver_agent == agent,
+        AgentMessage.message_type == message_type,
+        AgentMessage.validation_status == "VALIDATED",
+    ).order_by(AgentMessage.sequence_number)))
+    if len(messages) != 1:
+        raise EvidenceValidationError(f"Expected one validated {message_type} message")
+    validate_evidence_ids(db, workflow.incident_id, messages[0].evidence_ids)
+    return messages
+
+
+def _start_tool_call(
     db: Session,
+    workflow: AgenticWorkflow,
     execution: AgentExecution,
-    input_summary: dict,
-    output_summary: dict,
+    tool_name: str,
+    input_payload: dict,
+) -> ToolExecution:
+    definition = authorize_tool(ToolInvocation(
+        agent_type=execution.agent_type,
+        tool_name=tool_name,
+        input_payload=input_payload,
+    ))
+    sequence = (db.scalar(select(func.max(ToolExecution.sequence_number)).where(
+        ToolExecution.agent_execution_id == execution.id,
+    )) or 0) + 1
+    call = ToolExecution(
+        agent_execution_id=execution.id,
+        workflow_id=workflow.id,
+        agent_type=execution.agent_type,
+        tool_name=tool_name,
+        mode=definition.mode,
+        input_payload=input_payload,
+        output_payload={},
+        status="RUNNING",
+        duration_ms=0,
+        sequence_number=sequence,
+    )
+    db.add(call)
+    db.flush()
+    execution.selected_tool = tool_name
+    execution.current_state = "EXECUTE_TOOL"
+    execution.tool_call_ids = [*execution.tool_call_ids, call.id]
+    _persist_event(db, workflow, "tool.started", {
+        "agent_type": execution.agent_type,
+        "agent_execution_id": execution.id,
+        "tool_call_id": call.id,
+        "tool_name": tool_name,
+        "parameters": input_payload,
+    })
+    db.commit()
+    return call
+
+
+def _complete_tool_call(
+    db: Session,
+    workflow: AgenticWorkflow,
+    execution: AgentExecution,
+    call: ToolExecution,
+    output_payload: dict,
     duration_ms: int,
 ) -> None:
-    tool_names = AGENT_TOOLS[execution.agent_type]
-    execution.tools_used = list(tool_names)
-    per_tool_duration = duration_ms // max(1, len(tool_names))
-    for sequence, tool_name in enumerate(tool_names, 1):
-        definition = authorize_tool(ToolInvocation(
-            agent_type=execution.agent_type,
-            tool_name=tool_name,
-            input_payload=input_summary,
-        ))
-        definition.output_model.model_validate(output_summary)
-        db.add(ToolExecution(
-            agent_execution_id=execution.id,
-            workflow_id=execution.workflow_id,
-            agent_type=execution.agent_type,
-            tool_name=tool_name,
-            mode=definition.mode,
-            input_payload=input_summary,
-            output_payload=output_summary,
-            status="COMPLETED",
-            duration_ms=per_tool_duration,
-            sequence_number=sequence,
-        ))
-
-
-def _persist_agent_message(db: Session, workflow: AgenticWorkflow, agent: str, output_summary: dict) -> AgentMessage:
-    receiver, message_type = MESSAGE_BY_AGENT[agent]
-    existing = db.scalar(select(AgentMessage).where(
-        AgentMessage.correlation_id == workflow.id,
-        AgentMessage.sender_agent == agent,
-        AgentMessage.message_type == message_type,
+    definition = authorize_tool(ToolInvocation(
+        agent_type=execution.agent_type,
+        tool_name=call.tool_name,
+        input_payload=call.input_payload,
     ))
-    if existing is not None:
-        return existing
-    contract = AgentMessageContract(
-        sender_agent=agent,
-        receiver_agent=receiver,
-        message_type=message_type,
-        payload=output_summary,
-        evidence_ids=list(workflow.evidence_ids),
-        correlation_id=workflow.id,
-    )
-    validate_evidence_ids(db, workflow.incident_id, contract.evidence_ids)
-    message = AgentMessage(
-        workflow_id=workflow.id,
-        incident_id=workflow.incident_id,
-        sender_agent=contract.sender_agent,
-        receiver_agent=contract.receiver_agent,
-        message_type=contract.message_type,
-        payload=contract.payload,
-        evidence_ids=contract.evidence_ids,
-        correlation_id=contract.correlation_id,
-        sequence_number=_next_message_sequence(db, workflow.id),
-        validation_status="VALIDATED",
-    )
-    db.add(message)
-    return message
+    definition.output_model.model_validate(output_payload)
+    call.output_payload = output_payload
+    call.duration_ms = duration_ms
+    call.status = "COMPLETED"
+    execution.tools_used = [*execution.tools_used, call.tool_name]
+    execution.current_state = "VALIDATE_RESULT"
+    _persist_event(db, workflow, "tool.completed", {
+        "agent_type": execution.agent_type,
+        "agent_execution_id": execution.id,
+        "tool_call_id": call.id,
+        "tool_name": call.tool_name,
+        "duration_ms": duration_ms,
+        "result": output_payload,
+    })
+    db.commit()
+
+
+def _persist_agent_message(db: Session, workflow: AgenticWorkflow, agent: str, output_summary: dict) -> list[AgentMessage]:
+    receiver, message_type = MESSAGE_BY_AGENT[agent]
+    message_types = [message_type]
+    if agent == "DECISION":
+        message_types.insert(0, "RECOMMENDATION_PROPOSED")
+    messages: list[AgentMessage] = []
+    for selected_type in message_types:
+        selected_receiver = receiver
+        if selected_type == "RECOMMENDATION_PROPOSED":
+            selected_receiver = "HUMAN"
+        existing = db.scalar(select(AgentMessage).where(
+            AgentMessage.correlation_id == workflow.id,
+            AgentMessage.sender_agent == agent,
+            AgentMessage.message_type == selected_type,
+        ))
+        if existing is not None:
+            messages.append(existing)
+            continue
+        payload = {
+            **output_summary,
+            **({"recommendations": workflow.recommended_actions} if selected_type == "RECOMMENDATION_PROPOSED" else {}),
+        }
+        contract = AgentMessageContract(
+            sender_agent=agent,
+            receiver_agent=selected_receiver,
+            message_type=selected_type,
+            payload=payload,
+            evidence_ids=list(workflow.evidence_ids),
+            correlation_id=workflow.id,
+        )
+        validate_evidence_ids(db, workflow.incident_id, contract.evidence_ids)
+        message = AgentMessage(
+            workflow_id=workflow.id,
+            incident_id=workflow.incident_id,
+            sender_agent=contract.sender_agent,
+            receiver_agent=contract.receiver_agent,
+            message_type=contract.message_type,
+            payload=contract.payload,
+            summary=f"{agent} → {selected_receiver}: {selected_type}",
+            evidence_ids=contract.evidence_ids,
+            tool_call_ids=list(db.scalar(select(AgentExecution.tool_call_ids).where(
+                AgentExecution.workflow_id == workflow.id,
+                AgentExecution.agent_type == agent,
+            ).order_by(AgentExecution.attempt.desc()).limit(1)) or []),
+            correlation_id=contract.correlation_id,
+            sequence_number=_next_message_sequence(db, workflow.id),
+            validation_status="VALIDATED",
+        )
+        db.add(message)
+        db.flush()
+        _persist_event(db, workflow, "message.sent", {
+            "message_id": message.id,
+            "sender": message.sender_agent,
+            "receiver": message.receiver_agent,
+            "message_type": message.message_type,
+            "sequence_number": message.sequence_number,
+            "evidence_ids": message.evidence_ids,
+        })
+        messages.append(message)
+    return messages
 
 
 def _persist_failure_message(db: Session, workflow: AgenticWorkflow, agent: str, error: Exception) -> None:
@@ -349,7 +466,9 @@ def _persist_failure_message(db: Session, workflow: AgenticWorkflow, agent: str,
         receiver_agent=contract.receiver_agent,
         message_type=contract.message_type,
         payload=contract.payload,
+        summary=f"{contract.sender_agent} validation error: {type(error).__name__}",
         evidence_ids=[],
+        tool_call_ids=[],
         correlation_id=contract.correlation_id,
         sequence_number=_next_message_sequence(db, workflow.id),
         validation_status="REJECTED",
@@ -717,8 +836,55 @@ def run_workflow(
         started = time.perf_counter()
         try:
             _consume_inbound_messages(db, workflow.id, agent)
+            inbound_messages = _validate_inbound_messages(db, workflow, agent)
             execution = _start_execution(db, workflow, agent, input_summary)
-            active_runners[agent](db, workflow)
+            execution.incoming_message_ids = [message.id for message in inbound_messages]
+            _persist_event(db, workflow, "agent.started", {
+                "agent_type": agent, "agent_execution_id": execution.id,
+                "objective": execution.objective,
+            })
+            db.commit()
+            execution.current_state = "PLAN"
+            plan, plan_source, plan_provider, plan_model, plan_error = choose_agent_tool(
+                agent=agent,
+                objective=execution.objective,
+                observation=input_summary,
+                allowed_tools=list(AGENT_TOOLS[agent]),
+                deterministic_tool=PRIMARY_TOOL_BY_AGENT[agent],
+            )
+            execution.plan = plan
+            execution.output_source = plan_source
+            execution.llm_provider = plan_provider
+            execution.llm_model = plan_model
+            execution.error_code = plan_error
+            _persist_event(db, workflow, "agent.plan_created", {
+                "agent_type": agent, "agent_execution_id": execution.id,
+                "plan": plan, "source": plan_source,
+            })
+            execution.current_state = "SELECT_TOOL"
+            db.commit()
+            # The actual tool call receives only the bounded aggregate observation.
+            tool_contract_input = input_summary
+            tool_call = _start_tool_call(
+                db, workflow, execution, plan["selected_tool"], tool_contract_input,
+            )
+            tool_started = time.perf_counter()
+            _, tool_result = execute_stage_tool(
+                ToolInvocation(
+                    agent_type=agent,
+                    tool_name=plan["selected_tool"],
+                    input_payload=tool_contract_input,
+                ),
+                db,
+                workflow,
+                active_runners[agent],
+            )
+            domain_output = _output_summary(workflow)
+            _complete_tool_call(
+                db, workflow, execution, tool_call,
+                {**domain_output, "result": tool_result},
+                max(0, round((time.perf_counter() - tool_started) * 1000)),
+            )
             if agent in {"LOG_ANALYSIS", "CORRELATION", "RCA", "DECISION"}:
                 if workflow.evidence_ids:
                     validate_evidence_ids(db, workflow.incident_id, workflow.evidence_ids)
@@ -742,22 +908,59 @@ def run_workflow(
             }
             execution.evidence_ids = list(workflow.evidence_ids)
             execution.validations = ["MESSAGE_CONTRACT", "EVIDENCE_REFERENCES", "NEXT_STATE"]
+            execution.validation_result = {"valid": True, "checks": execution.validations}
+            execution.current_state = "SEND_MESSAGE"
+            execution.stop_reason = AGENT_CONTRACTS[agent]["stop"]
             execution.duration_ms = duration_ms
             execution.completed_at = datetime.now(timezone.utc)
-            execution.output_source = llm_result.source
-            execution.llm_provider = llm_result.provider
-            execution.llm_model = llm_result.model
-            execution.error_code = llm_result.error_code
-            _record_tools(db, execution, input_summary, output_summary, duration_ms)
-            outgoing_message = _persist_agent_message(db, workflow, agent, output_summary)
+            if llm_result.source == "LLM_AUGMENTED":
+                execution.output_source = "LLM"
+                execution.llm_provider = llm_result.provider
+                execution.llm_model = llm_result.model
+            execution.error_code = llm_result.error_code or plan_error
+            outgoing_messages = _persist_agent_message(db, workflow, agent, output_summary)
             db.flush()
-            execution.outgoing_message_ids = [outgoing_message.id]
+            execution.outgoing_message_ids = [message.id for message in outgoing_messages]
+            execution.current_state = "REQUEST_NEXT_TRANSITION"
+            _persist_event(db, workflow, "agent.validation_completed", {
+                "agent_type": agent, "agent_execution_id": execution.id,
+                "valid": True, "checks": execution.validations,
+            })
             _history(db, workflow, agent, "AGENT_COMPLETED", input_summary, output_summary, duration_ms)
+            _persist_event(db, workflow, "agent.completed", {
+                "agent_type": agent,
+                "agent_execution_id": execution.id,
+                "source": execution.output_source,
+                "duration_ms": duration_ms,
+                "next_state": workflow.workflow_status,
+            })
+            if workflow.workflow_status == "WAITING_FOR_HUMAN_APPROVAL":
+                _persist_event(db, workflow, "workflow.waiting_for_human", {
+                    "approval_status": workflow.approval_status,
+                })
+            execution.current_state = "STOP"
             db.commit()
             transitions += 1
         except Exception as error:
             db.rollback()
             workflow = db.get(AgenticWorkflow, workflow_id)
+            running_execution = db.scalar(select(AgentExecution).where(
+                AgentExecution.workflow_id == workflow.id,
+                AgentExecution.agent_type == agent,
+                AgentExecution.status == "RUNNING",
+            ).order_by(AgentExecution.attempt.desc()))
+            if running_execution is not None:
+                for call in db.scalars(select(ToolExecution).where(
+                    ToolExecution.agent_execution_id == running_execution.id,
+                    ToolExecution.status == "RUNNING",
+                )):
+                    call.status = "FAILED"
+                    call.output_payload = {"error_code": type(error).__name__}
+                    call.duration_ms = max(0, round((time.perf_counter() - started) * 1000))
+                    _persist_event(db, workflow, "tool.failed", {
+                        "agent_type": agent, "tool_call_id": call.id,
+                        "tool_name": call.tool_name, "error_code": type(error).__name__,
+                    })
             workflow.retry_count += 1
             workflow.last_error = _safe_error(error)
             workflow.workflow_status = "FAILED" if workflow.retry_count >= workflow.max_retries else "RETRYABLE_ERROR"
@@ -769,10 +972,17 @@ def run_workflow(
             failed_execution.duration_ms = duration_ms
             failed_execution.output_payload = {"error": _safe_error(error)}
             failed_execution.validations = ["FAILED"]
+            failed_execution.validation_result = {"valid": False, "error_code": type(error).__name__}
+            failed_execution.current_state = "STOP"
+            failed_execution.stop_reason = _safe_error(error)
             failed_execution.completed_at = datetime.now(timezone.utc)
             failed_execution.stop_condition = contract["failure"]
             _persist_failure_message(db, workflow, agent, error)
             _history(db, workflow, agent, "AGENT_ERROR", input_summary, {}, duration_ms, error)
+            _persist_event(db, workflow, "workflow.failed", {
+                "agent_type": agent, "error_code": type(error).__name__,
+                "message": _safe_error(error), "retryable": workflow.workflow_status == "RETRYABLE_ERROR",
+            })
             db.commit()
             return workflow
     return db.get(AgenticWorkflow, workflow_id)

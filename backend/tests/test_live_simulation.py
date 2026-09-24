@@ -1,8 +1,11 @@
+import hashlib
+from pathlib import Path
+
 from sqlalchemy import select
 
 from app.db import get_db
 from app.main import app
-from app.models import AuditLog, Campaign, LiveSimulationSession, OTAEvent, SimulationStage
+from app.models import AgentEvent, AuditLog, Campaign, IncidentReport, LLMCallAudit, LiveSimulationSession, OTAEvent, SimulationStage
 
 
 def jury_payload(name="BatteryManager Live Jury"):
@@ -148,6 +151,15 @@ def test_jury_session_is_idempotent_isolated_and_runs_full_workflow(client):
             "LIVE_SESSION_CREATED", "LIVE_SIMULATION_STARTED", "LIVE_INVESTIGATION_STARTED",
         }
         assert all(row.details["source"] == "LIVE_SIMULATION" for row in audits)
+        report = db.scalar(select(IncidentReport).where(IncidentReport.workflow_id == investigated["workflow_id"]))
+        assert report is not None and Path(report.pdf_path).is_file() and Path(report.html_path).is_file()
+        assert hashlib.sha256(Path(report.pdf_path).read_bytes()).hexdigest() == report.pdf_sha256
+        events = list(db.scalars(select(AgentEvent).where(AgentEvent.workflow_id == investigated["workflow_id"])))
+        assert [row.event_type for row in events if row.event_type.startswith("report.")] == [
+            "report.generation_started", "report.ready",
+        ]
+        explanation_audits = list(db.scalars(select(LLMCallAudit).where(LLMCallAudit.workflow_id == investigated["workflow_id"])))
+        assert explanation_audits and all(row.attempt_count == 0 for row in explanation_audits)
     finally:
         next(generator, None)
 

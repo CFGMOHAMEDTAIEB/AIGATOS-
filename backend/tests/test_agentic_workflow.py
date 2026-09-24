@@ -12,7 +12,7 @@ from app.models import (
     Incident, SimulationRun, SimulationStage, ToolExecution, WorkflowHistory,
 )
 from app.schemas.agents import ToolInvocation
-from app.services.agent_tools import ToolAuthorizationError, authorize_tool
+from app.services.agent_tools import AGENT_TOOLS, ToolAuthorizationError, authorize_tool, execute_stage_tool
 from app.services.agentic_workflow import (
     AGENTS, EvidenceValidationError, create_workflow, prepare_retry,
     run_workflow, validate_evidence_ids, validate_hypotheses,
@@ -77,6 +77,15 @@ def test_complete_five_agent_chain_is_idempotent_and_advisory(client, monkeypatc
         workflow, created = create_workflow(db, incident_id)
         db.commit()
         assert created and incident.anomaly_score is None
+        def choose_secondary_tool(agent, objective, observation, allowed_tools, deterministic_tool):
+            selected = "normalize_error" if agent == "LOG_ANALYSIS" else deterministic_tool
+            assert selected in allowed_tools
+            return ({
+                "selected_tool": selected,
+                "operational_summary": "Contract-tested bounded plan.",
+                "expected_result": "Validated structured output.",
+            }, "DETERMINISTIC_FALLBACK", None, None, None)
+        monkeypatch.setattr("app.services.agentic_workflow.choose_agent_tool", choose_secondary_tool)
         completed = run_workflow(db, workflow.id)
         assert completed.workflow_status == "WAITING_FOR_HUMAN_APPROVAL"
         assert completed.current_agent is None
@@ -103,15 +112,34 @@ def test_complete_five_agent_chain_is_idempotent_and_advisory(client, monkeypatc
         ).order_by(AgentMessage.sequence_number)))
         tools = list(db.scalars(select(ToolExecution).where(ToolExecution.workflow_id == workflow.id)))
         assert [item.agent_type for item in executions] == list(AGENTS)
-        assert [item.sequence_number for item in messages] == [1, 2, 3, 4, 5]
+        assert [item.sequence_number for item in messages] == [1, 2, 3, 4, 5, 6]
         assert [item.message_type for item in messages] == [
-            "INCIDENT_DETECTED", "LOG_SUMMARY_READY", "CORRELATION_READY",
-            "RCA_READY", "HUMAN_APPROVAL_REQUIRED",
+            "INCIDENT_DETECTED", "NORMALIZED_FAILURES_READY", "CORRELATIONS_READY",
+            "ROOT_CAUSES_READY", "RECOMMENDATION_PROPOSED", "HUMAN_APPROVAL_REQUIRED",
         ]
         assert all(item.validation_status == "VALIDATED" for item in messages)
         assert all(item.evidence_ids for item in messages)
-        assert all(item.output_source == "DETERMINISTIC" for item in executions)
+        assert all(item.output_source == "DETERMINISTIC_FALLBACK" for item in executions)
         assert tools and all(item.mode in {"READ_ONLY", "INTERNAL_WRITE"} for item in tools)
+        assert {item.agent_type: item.tool_name for item in tools} == {
+            "MONITORING": "read_simulation_metrics",
+            "LOG_ANALYSIS": "normalize_error",
+            "CORRELATION": "build_cohorts",
+            "RCA": "rank_root_causes",
+            "DECISION": "create_pending_approval",
+        }
+        assert all(item.status == "COMPLETED" and item.duration_ms >= 0 for item in tools)
+        log_tool = next(item for item in tools if item.agent_type == "LOG_ANALYSIS")
+        assert log_tool.output_payload["result"]["normalized_error_count"] == len(completed.normalized_errors)
+        assert all(item.output_payload for item in tools)
+        assert next(item for item in tools if item.agent_type == "DECISION").output_payload["approval_status"] == "PENDING"
+        for agent in AGENTS:
+            for tool_name in AGENT_TOOLS[agent]:
+                _, operation_result = execute_stage_tool(
+                    ToolInvocation(agent_type=agent, tool_name=tool_name),
+                    db, workflow, lambda *_args: None,
+                )
+                assert operation_result, f"{agent}.{tool_name} returned no operation result"
 
         again, was_created = create_workflow(db, incident_id)
         assert not was_created and again.id == workflow.id

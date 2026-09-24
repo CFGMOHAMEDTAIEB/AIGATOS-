@@ -65,6 +65,14 @@ class AgentExecution(Base):
     agent_type: Mapped[str] = mapped_column(String(40), nullable=False)
     objective: Mapped[str] = mapped_column(String(500), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
+    current_state: Mapped[str] = mapped_column(String(30), nullable=False, default="OBSERVE")
+    observation: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    plan: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    selected_tool: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    tool_call_ids: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    validation_result: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    runtime_retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stop_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     authorized_context: Mapped[dict] = mapped_column(JSON, nullable=False)
     tools_allowed: Mapped[list] = mapped_column(JSON, nullable=False)
     tools_used: Mapped[list] = mapped_column(JSON, nullable=False)
@@ -99,7 +107,9 @@ class AgentMessage(Base):
     receiver_agent: Mapped[str] = mapped_column(String(40), nullable=False)
     message_type: Mapped[str] = mapped_column(String(50), nullable=False)
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    summary: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     evidence_ids: Mapped[list] = mapped_column(JSON, nullable=False)
+    tool_call_ids: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     correlation_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     sequence_number: Mapped[int] = mapped_column(Integer, nullable=False)
     validation_status: Mapped[str] = mapped_column(String(30), nullable=False)
@@ -121,6 +131,18 @@ class ToolExecution(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sequence_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
+
+
+class AgentEvent(Base):
+    __tablename__ = "agent_events"
+    __table_args__ = (UniqueConstraint("workflow_id", "sequence_number", name="uq_agent_event_sequence"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    workflow_id: Mapped[str] = mapped_column(ForeignKey("agentic_workflows.id", ondelete="CASCADE"), nullable=False, index=True)
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id", ondelete="RESTRICT"), nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(60), nullable=False)
+    sequence_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 

@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import json
+import time
+
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import (
-    AgentExecution, AgentMessage, AgenticWorkflow, HumanApprovalRequest, Incident,
+    AgentEvent, AgentExecution, AgentMessage, AgenticWorkflow, HumanApprovalRequest, Incident,
     IncidentEvidence, OTAEvent, ToolExecution, WorkflowHistory,
 )
 from app.schemas.workflow import HumanDecision
-from app.services.agentic_workflow import create_workflow, prepare_retry, record_human_decision, workflow_state
+from app.services.agentic_workflow import (
+    TERMINAL_STATUSES, create_workflow, prepare_retry, record_human_decision, workflow_state,
+)
 from app.tasks import run_investigation
 
 
@@ -76,12 +82,18 @@ def get_executions(workflow_id: str, db: Session = Depends(get_db)) -> list[dict
     ).order_by(AgentExecution.created_at, AgentExecution.agent_type, AgentExecution.attempt)))
     return [{
         "id": row.id, "agent_type": row.agent_type, "objective": row.objective,
-        "status": row.status, "tools_allowed": row.tools_allowed, "tools_used": row.tools_used,
+        "status": row.status, "current_state": row.current_state,
+        "observation": row.observation, "plan": row.plan,
+        "selected_tool": row.selected_tool, "tool_call_ids": row.tool_call_ids,
+        "validation_result": row.validation_result, "runtime_retry_count": row.runtime_retry_count,
+        "stop_reason": row.stop_reason,
+        "tools_allowed": row.tools_allowed, "tools_used": row.tools_used,
         "input_payload": row.input_payload, "output_payload": row.output_payload,
         "evidence_ids": row.evidence_ids, "incoming_message_ids": row.incoming_message_ids,
         "outgoing_message_ids": row.outgoing_message_ids, "validations": row.validations,
         "attempt": row.attempt, "duration_ms": row.duration_ms,
         "proposed_next_state": row.proposed_next_state, "output_source": row.output_source,
+        "llm_provider": row.llm_provider, "llm_model": row.llm_model,
         "error_code": row.error_code, "created_at": row.created_at, "completed_at": row.completed_at,
     } for row in rows]
 
@@ -94,8 +106,9 @@ def get_messages(workflow_id: str, db: Session = Depends(get_db)) -> list[dict]:
     ).order_by(AgentMessage.sequence_number)))
     return [{
         "id": row.id, "sender_agent": row.sender_agent, "receiver_agent": row.receiver_agent,
-        "message_type": row.message_type, "payload": row.payload,
-        "evidence_ids": row.evidence_ids, "correlation_id": row.correlation_id,
+        "message_type": row.message_type, "summary": row.summary, "payload": row.payload,
+        "evidence_ids": row.evidence_ids, "tool_call_ids": row.tool_call_ids,
+        "correlation_id": row.correlation_id,
         "sequence_number": row.sequence_number, "validation_status": row.validation_status,
         "created_at": row.created_at, "consumed_at": row.consumed_at,
     } for row in rows]
@@ -114,6 +127,64 @@ def get_tool_executions(workflow_id: str, db: Session = Depends(get_db)) -> list
         "status": row.status, "duration_ms": row.duration_ms,
         "sequence_number": row.sequence_number, "created_at": row.created_at,
     } for row in rows]
+
+
+@router.get("/workflows/{workflow_id}/events")
+def get_workflow_events(
+    workflow_id: str,
+    after: int = 0,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    _get_workflow(db, workflow_id)
+    rows = list(db.scalars(select(AgentEvent).where(
+        AgentEvent.workflow_id == workflow_id,
+        AgentEvent.sequence_number > after,
+    ).order_by(AgentEvent.sequence_number)))
+    return [{
+        "id": row.id, "event_id": row.sequence_number, "event": row.event_type,
+        "data": row.payload, "created_at": row.created_at,
+    } for row in rows]
+
+
+@router.get("/workflows/{workflow_id}/stream")
+def stream_workflow_events(
+    workflow_id: str,
+    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
+    _get_workflow(db, workflow_id)
+    try:
+        cursor = max(0, int(last_event_id or 0))
+    except ValueError:
+        cursor = 0
+
+    def event_stream():
+        nonlocal cursor
+        deadline = time.monotonic() + 25
+        while time.monotonic() < deadline:
+            rows = list(db.scalars(select(AgentEvent).where(
+                AgentEvent.workflow_id == workflow_id,
+                AgentEvent.sequence_number > cursor,
+            ).order_by(AgentEvent.sequence_number).limit(100)))
+            for row in rows:
+                cursor = row.sequence_number
+                yield (
+                    f"id: {row.sequence_number}\n"
+                    f"event: {row.event_type}\n"
+                    f"data: {json.dumps(row.payload, ensure_ascii=False, separators=(',', ':'))}\n\n"
+                )
+            workflow = db.get(AgenticWorkflow, workflow_id)
+            if workflow is None or (workflow.workflow_status in TERMINAL_STATUSES and not rows):
+                return
+            if not rows:
+                yield ": keep-alive\n\n"
+                time.sleep(0.5)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/incidents/{incident_id}/evidence")

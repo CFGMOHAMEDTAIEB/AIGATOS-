@@ -6,13 +6,13 @@ from app.models.simulation import AuditLog, Incident, IncidentEvidence, OTAEvent
 __all__ += ["SimulationRun", "SimulationStage", "SimulationVehicle", "OTAEvent", "AuditLog", "Incident", "IncidentEvidence"]
 
 from app.models.workflow import (
-    AgentExecution, AgentMessage, AgenticWorkflow, HumanApprovalRequest, IncidentExplanation,
+    AgentEvent, AgentExecution, AgentMessage, AgenticWorkflow, HumanApprovalRequest, IncidentExplanation,
     IncidentReport, LLMCallAudit, ToolExecution, WorkflowHistory,
 )
 __all__ += [
     "AgenticWorkflow", "WorkflowHistory", "HumanApprovalRequest",
     "IncidentExplanation", "IncidentReport", "LLMCallAudit",
-    "AgentExecution", "AgentMessage", "ToolExecution",
+    "AgentExecution", "AgentMessage", "ToolExecution", "AgentEvent",
 ]
 
 from app.models.live import LiveSimulationSession

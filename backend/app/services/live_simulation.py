@@ -16,6 +16,7 @@ from app.models import (
 )
 from app.schemas.live import LiveSimulationCreate
 from app.services.agentic_workflow import create_workflow, run_workflow, workflow_state
+from app.services.incident_report import generate_automatic_report
 from app.services.monitoring_agent import MonitoringThresholds, monitor_stage
 
 
@@ -291,6 +292,8 @@ def investigate_live_session(db: Session, session_id: str, idempotency_key: str)
     if session.investigation_key == idempotency_key and session.workflow_id:
         workflow = db.get(AgenticWorkflow, session.workflow_id)
         session.status = workflow.workflow_status
+        if workflow.workflow_status == "WAITING_FOR_HUMAN_APPROVAL":
+            generate_automatic_report(db, workflow.id)
         _audit(
             db, session, "LIVE_INVESTIGATION_STARTED", "COMPLETED",
             f"Deterministic five-agent workflow completed: {workflow.workflow_status}",
@@ -310,6 +313,8 @@ def investigate_live_session(db: Session, session_id: str, idempotency_key: str)
     workflow = run_workflow(db, workflow.id)
     session = get_live_session(db, session_id)
     session.status = workflow.workflow_status
+    if workflow.workflow_status == "WAITING_FOR_HUMAN_APPROVAL":
+        generate_automatic_report(db, workflow.id)
     _audit(
         db, session, "LIVE_INVESTIGATION_STARTED", "COMPLETED",
         f"Deterministic five-agent workflow completed: {workflow.workflow_status}",

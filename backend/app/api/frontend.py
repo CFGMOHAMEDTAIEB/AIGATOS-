@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.celery_app import celery_app
 from app.db import get_db
 from app.models import (
+    AgentEvent,
     AgentMessage,
     AgenticWorkflow,
     AuditLog,
@@ -397,6 +398,18 @@ def audit_history(
         } for row in db.scalars(select(ToolExecution).where(
             ToolExecution.workflow_id == context["workflow_id"],
         ).order_by(ToolExecution.created_at, ToolExecution.sequence_number)))
+        entries.extend({
+            "id": row.id,
+            "timestamp": row.created_at,
+            "category": "AGENT",
+            "actor": row.payload.get("agent_type", "ORCHESTRATOR"),
+            "action": row.event_type,
+            "status": "PERSISTED",
+            "summary": row.event_type,
+            "details": row.payload,
+        } for row in db.scalars(select(AgentEvent).where(
+            AgentEvent.workflow_id == context["workflow_id"],
+        ).order_by(AgentEvent.sequence_number)))
     entries.sort(key=lambda item: item["timestamp"])
     return {"context": context, "entries": entries}
 

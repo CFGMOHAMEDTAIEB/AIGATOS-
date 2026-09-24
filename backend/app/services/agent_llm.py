@@ -24,6 +24,14 @@ class AgentNarrative(BaseModel):
         return self
 
 
+class AgentPlan(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    selected_tool: str = Field(min_length=1, max_length=100)
+    operational_summary: str = Field(min_length=1, max_length=500)
+    expected_result: str = Field(min_length=1, max_length=300)
+
+
 @dataclass(frozen=True)
 class AgentLLMResult:
     source: str
@@ -44,7 +52,7 @@ def optional_agent_narrative(
     evidence_ids: list[str],
 ) -> AgentLLMResult:
     if agent not in {"LOG_ANALYSIS", "RCA", "DECISION"} or not _enabled():
-        return AgentLLMResult("DETERMINISTIC", {})
+        return AgentLLMResult("DETERMINISTIC_FALLBACK", {})
     try:
         settings = load_llm_settings()
         if not settings.configured:
@@ -80,3 +88,42 @@ def optional_agent_narrative(
     except LLMConfigurationError:
         return AgentLLMResult("DETERMINISTIC_FALLBACK", {}, error_code="LLM_CONFIGURATION_ERROR")
 
+
+def choose_agent_tool(
+    agent: str,
+    objective: str,
+    observation: dict,
+    allowed_tools: list[str],
+    deterministic_tool: str,
+) -> tuple[dict, str, str | None, str | None, str | None]:
+    fallback = {
+        "selected_tool": deterministic_tool,
+        "operational_summary": f"Analyse déterministe de l’étape {agent} à partir des résultats observés.",
+        "expected_result": "Résultat structuré validé avant la transition suivante.",
+    }
+    if not _enabled():
+        return fallback, "DETERMINISTIC_FALLBACK", None, None, None
+    try:
+        settings = load_llm_settings()
+        if not settings.configured:
+            return fallback, "DETERMINISTIC_FALLBACK", settings.provider, settings.model, "LLM_NOT_CONFIGURED"
+        system = (
+            "Select exactly one tool from the allowed list for this bounded analysis step. "
+            "Return a brief operational summary, not private chain-of-thought. "
+            "Never invent data, call tools, change evidence or scores, approve, or choose a transition."
+        )
+        user = json.dumps({
+            "agent": agent,
+            "objective": objective,
+            "observation": observation,
+            "allowed_tools": allowed_tools,
+            "allowed_evidence_ids": observation.get("evidence_ids", [])[:50],
+        }, ensure_ascii=False)
+        _, plan = get_provider(settings).generate_structured(system, user, AgentPlan)
+        if plan.selected_tool not in allowed_tools:
+            return fallback, "DETERMINISTIC_FALLBACK", settings.provider, settings.model, "LLM_TOOL_NOT_ALLOWED"
+        return plan.model_dump(), "LLM", settings.provider, settings.model, None
+    except LLMError as error:
+        return fallback, "DETERMINISTIC_FALLBACK", error.provider, error.model, error.code
+    except LLMConfigurationError:
+        return fallback, "DETERMINISTIC_FALLBACK", None, None, "LLM_CONFIGURATION_ERROR"

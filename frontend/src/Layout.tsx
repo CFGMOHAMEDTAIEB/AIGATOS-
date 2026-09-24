@@ -16,6 +16,7 @@ import DescriptionRounded from '@mui/icons-material/DescriptionRounded'
 import SensorsRounded from '@mui/icons-material/SensorsRounded'
 import ScienceRounded from '@mui/icons-material/ScienceRounded'
 import HistoryRounded from '@mui/icons-material/HistoryRounded'
+import SmartToyRounded from '@mui/icons-material/SmartToyRounded'
 import { useOperationalSession } from './SessionContext'
 import { shortId, utc } from './components'
 
@@ -27,6 +28,7 @@ const nav=[
   ['Simulation','/simulation',<ScienceRounded/>],
   ['Incidents','/incidents',<WarningAmberRounded/>],
   ['Analyse agentique','/analysis',<AccountTreeRounded/>],
+  ['Assistant LLM','/assistant',<SmartToyRounded/>],
   ['Rapports','/reports',<DescriptionRounded/>],
   ['Audit','/audit',<HistoryRounded/>],
 ] as const

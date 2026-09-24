@@ -4,6 +4,7 @@ import { CampaignDetailPage, CampaignsPage, DashboardPage, IncidentPage, NotFoun
 import { LiveSimulationPage } from './LiveSimulationPage'
 import { AnalysisPage } from './AnalysisPage'
 import { AuditPage } from './AuditPage'
+import { AssistantPage } from './AssistantPage'
 
 export function App(){return <Routes><Route element={<Layout/>}>
   <Route index element={<DashboardPage/>}/>
@@ -12,6 +13,7 @@ export function App(){return <Routes><Route element={<Layout/>}>
   <Route path="simulation" element={<LiveSimulationPage/>}/>
   <Route path="incidents" element={<IncidentPage/>}/>
   <Route path="analysis" element={<AnalysisPage/>}/>
+  <Route path="assistant" element={<AssistantPage/>}/>
   <Route path="reports" element={<ReportsPage/>}/>
   <Route path="audit" element={<AuditPage/>}/>
   <Route path="live-simulation" element={<Navigate to="/simulation" replace/>}/>

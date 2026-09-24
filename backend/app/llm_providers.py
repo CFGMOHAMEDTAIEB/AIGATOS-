@@ -99,8 +99,10 @@ class OpenAICompatibleProvider(LLMProvider):
         try: return [item.id for item in self.client.models.list().data]
         except Exception as error: raise self.normalize_error(error) from error
 
-    def _once(self,system_prompt:str,user_prompt:str)->ProviderResult:
-        response=self.client.chat.completions.create(model=self.settings.model,messages=[{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],temperature=min(self.settings.temperature,.2),response_format={"type":"json_object"},max_tokens=self.settings.max_output_tokens)
+    def _once(self,system_prompt:str,user_prompt:str,*,structured:bool=True)->ProviderResult:
+        arguments={"model":self.settings.model,"messages":[{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],"temperature":min(self.settings.temperature,.2),"max_tokens":self.settings.max_output_tokens}
+        if structured: arguments["response_format"]={"type":"json_object"}
+        response=self.client.chat.completions.create(**arguments)
         content=response.choices[0].message.content if response.choices else None
         if not content: raise LLMInvalidResponseError(self.settings.provider,self.settings.model)
         usage=getattr(response,"usage",None)
@@ -120,13 +122,29 @@ class OpenAICompatibleProvider(LLMProvider):
                 self.sleeper(min(.25*(2**(attempt-1)),1.0))
         raise last or LLMUnavailableError(self.settings.provider,self.settings.model)
 
+    def generate_text(self,system_prompt:str,user_prompt:str)->ProviderResult:
+        """Generate one bounded, plain-text assistant response."""
+        last:LLMError|None=None
+        for attempt in range(1,self.settings.max_attempts+1):
+            try:
+                result=self._once(system_prompt,user_prompt,structured=False)
+                return ProviderResult(**{**result.__dict__,"attempt_count":attempt})
+            except Exception as error:
+                last=self.normalize_error(error)
+                if not last.retryable or attempt>=self.settings.max_attempts:
+                    last.attempt_count=attempt
+                    raise last from error
+                self.sleeper(min(.25*(2**(attempt-1)),1.0))
+        raise last or LLMUnavailableError(self.settings.provider,self.settings.model)
+
 
 class NvidiaProvider(OpenAICompatibleProvider): pass
 class GoogleProvider(OpenAICompatibleProvider): pass
 class DeepSeekProvider(OpenAICompatibleProvider): pass
 class KimiProvider(OpenAICompatibleProvider): pass
+class OpenAIProvider(OpenAICompatibleProvider): pass
 
-PROVIDER_REGISTRY:dict[str,Callable[[LLMSettings],LLMProvider]]={"nvidia":NvidiaProvider,"google":GoogleProvider,"deepseek":DeepSeekProvider,"kimi":KimiProvider}
+PROVIDER_REGISTRY:dict[str,Callable[[LLMSettings],LLMProvider]]={"nvidia":NvidiaProvider,"google":GoogleProvider,"openai":OpenAIProvider,"deepseek":DeepSeekProvider,"kimi":KimiProvider}
 
 
 def get_provider(settings:LLMSettings,registry:dict[str,Callable[[LLMSettings],LLMProvider]]|None=None)->LLMProvider:

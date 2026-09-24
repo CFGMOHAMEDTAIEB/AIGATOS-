@@ -1,8 +1,8 @@
 import time
 from typing import Literal
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from app.llm_config import LLMConfigurationError, load_llm_settings, safe_settings
 from app.llm_providers import LLMAuthenticationError, LLMError, LLMPermissionError, get_provider
@@ -12,6 +12,16 @@ router=APIRouter(prefix="/api/v1/llm",tags=["llm-diagnostics"])
 
 class ProbeOutput(BaseModel):
     ok: Literal[True]
+
+
+class ChatRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=4000)
+
+
+class ChatResponse(BaseModel):
+    provider: str
+    model: str
+    reply: str
 
 
 def _base(settings):
@@ -44,3 +54,24 @@ def test_provider()->dict:
         result["authorized"]=not isinstance(error,(LLMAuthenticationError,LLMPermissionError)) and result["reachable"]
     result["latency_ms"]=round((time.perf_counter()-started)*1000)
     return result
+
+
+@router.post("/chat", response_model=ChatResponse)
+def chat(payload: ChatRequest) -> ChatResponse:
+    """Text-only assistant; it has no tools or access to business operations."""
+    try:
+        settings=load_llm_settings()
+    except LLMConfigurationError:
+        raise HTTPException(status_code=503,detail={"code":"LLM_CONFIGURATION_ERROR","message":"Le fournisseur LLM n’est pas configuré."})
+    if not settings.configured:
+        raise HTTPException(status_code=503,detail={"code":"LLM_NOT_CONFIGURED","message":"Le fournisseur LLM n’est pas configuré."})
+    try:
+        result=get_provider(settings).generate_text(
+            "You are the AIGATOS assistant. Reply in French, clearly and concisely. "
+            "You have no access to application data and cannot execute tools, actions, "
+            "approvals, simulations, or vehicle operations. Never claim otherwise.",
+            payload.prompt.strip(),
+        )
+    except LLMError as error:
+        raise HTTPException(status_code=502,detail=error.public()) from error
+    return ChatResponse(provider=settings.provider or "",model=settings.model or "",reply=result.content)

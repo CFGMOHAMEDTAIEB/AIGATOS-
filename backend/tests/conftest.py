@@ -10,7 +10,8 @@ from app import models  # noqa: F401
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch, tmp_path):
+    monkeypatch.setenv("AIGATOS_REPORT_DIR", str(tmp_path / "reports"))
     engine = create_engine(
         "sqlite+pysqlite://",
         connect_args={"check_same_thread": False},

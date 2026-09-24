@@ -1,0 +1,100 @@
+INFO:     127.0.0.1:52683 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52687 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52708 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52710 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52712 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52714 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52722 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52724 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52731 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52733 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52735 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52737 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52739 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52741 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52744 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52746 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52748 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52750 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52752 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52755 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52757 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52759 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52762 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52774 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52777 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52792 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52796 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52810 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52819 - "GET /api/v1/ui/campaigns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52821 - "GET /api/v1/ui/campaigns/8cc9e495-48c9-4ebd-acd2-d369b99f9639 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52841 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52839 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52853 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52844 - "GET /api/v1/ui/vehicles?limit=250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52860 - "GET /api/v1/ui/vehicles/d976e29a-e903-40bf-beac-42b640671c15 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "GET /api/v1/ui/vehicles?limit=250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52871 - "GET /api/v1/ui/vehicles?hardware_revision=HW_REV_A&limit=250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52912 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52913 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52915 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52914 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52932 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52933 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52937 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52941 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52942 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52945 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52952 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/reports HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52976 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52977 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52979 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52978 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53002 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53008 - "GET /api/v1/ui/campaigns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53010 - "GET /api/v1/ui/campaigns/8cc9e495-48c9-4ebd-acd2-d369b99f9639 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53019 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53020 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53022 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53021 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53078 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53513 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53522 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53532 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53533 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53535 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53534 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53539 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53643 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49548 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57544 - "GET /api/v1/ui/campaigns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57545 - "GET /api/v1/ui/vehicles?limit=250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57656 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/explanation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57766 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57773 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50943 - "GET /api/v1/ui/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50954 - "GET /api/v1/ui/campaigns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50958 - "GET /api/v1/ui/vehicles?limit=250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56489 - "GET /frontend/capabilities HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56494 - "GET /frontend/capabilities HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56490 - "GET /api/v1/ui/vehicles?limit=250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56565 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56564 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56591 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56592 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56641 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56640 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56648 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56649 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56653 - "GET /incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/evidence HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56652 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56660 - "GET /agent-maturity HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56667 - "GET /agent-maturity HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56670 - "GET /workflows/cde0930e-b80a-447f-8ccc-92c6d97b11ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56672 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/reports HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56678 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/explanation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56698 - "GET /frontend/capabilities HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56697 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/explanation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56699 - "GET /frontend/capabilities HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50404 - "GET /api/v1/ui/incidents/dedbd95d-8029-4116-ae6e-6bc220fdb347/explanation HTTP/1.1" 200 OK

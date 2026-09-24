@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "datasets": [
+    {
+      "name": "Automotive Vehicles Engine Health",
+      "kaggle_id": "parvmodi/automotive-vehicles-engine-health-dataset",
+      "url": "https://www.kaggle.com/datasets/parvmodi/automotive-vehicles-engine-health-dataset",
+      "author": "PARV MODI",
+      "license": "CC0: Public Domain",
+      "version": 1,
+      "downloaded_at_utc": "2026-09-22T20:39:54.890221+00:00",
+      "source_last_modified_utc": "2023-04-05T15:42:19+00:00",
+      "compressed_size_bytes": 609151,
+      "decompressed_size_bytes": 1301801,
+      "files": [
+        {
+          "path": "datasets/raw/automotive-engine-health/automotive-vehicles-engine-health-dataset.zip",
+          "size_bytes": 609151,
+          "sha256": "71cb5489ebaef31ec1dab5a850c4628c97a5687b6fabaef6ceee2cb056e2e554",
+          "kind": "archive"
+        },
+        {
+          "path": "datasets/raw/automotive-engine-health/original/engine_data.csv",
+          "size_bytes": 1301801,
+          "sha256": "616c7b985ec00e299061f02b11fd866f8eca16b5e8d15d4a61a5fbfd116b8045",
+          "kind": "extracted_raw"
+        }
+      ]
+    },
+    {
+      "name": "BETH Dataset",
+      "kaggle_id": "katehighnam/beth-dataset",
+      "url": "https://www.kaggle.com/datasets/katehighnam/beth-dataset",
+      "author": "Kate Highnam",
+      "license": "CC0: Public Domain",
+      "version": 3,
+      "downloaded_at_utc": "2026-09-22T20:39:57.441269+00:00",
+      "source_last_modified_utc": "2021-07-29T13:46:51+00:00",
+      "compressed_size_bytes": 41683906,
+      "decompressed_size_bytes": 928188305,
+      "files": [
+        {
+          "path": "datasets/raw/beth/beth-dataset.zip",
+          "size_bytes": 41683906,
+          "sha256": "c052c84683c3892953a123e75c7bfd29b31052dbf43384a484db6994e28e926f",
+          "kind": "archive"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-105-dns.csv",
+          "size_bytes": 40348,
+          "sha256": "422b8f64c7f6e2c488d3219a812dabb074769e9d13def16c23dbeda8ee5baa4b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-105.csv",
+          "size_bytes": 99560489,
+          "sha256": "528ad1f4813a9fbb839f3c4b37f7b1a861f0e33d998fb46e6d59caef119fb597",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-186-dns.csv",
+          "size_bytes": 40348,
+          "sha256": "422b8f64c7f6e2c488d3219a812dabb074769e9d13def16c23dbeda8ee5baa4b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-186.csv",
+          "size_bytes": 168847145,
+          "sha256": "959ad652a95805ddcd051a440b2b83ef0c8180b9a0e5fd025ca293c39c2236b1",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-26-dns.csv",
+          "size_bytes": 40348,
+          "sha256": "422b8f64c7f6e2c488d3219a812dabb074769e9d13def16c23dbeda8ee5baa4b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-26.csv",
+          "size_bytes": 89492147,
+          "sha256": "1f2bdd7bbd53322c1ae7aebfcc1ba3a5c490f82381e4732f6fd71a786a096a3b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-4-dns.csv",
+          "size_bytes": 40348,
+          "sha256": "422b8f64c7f6e2c488d3219a812dabb074769e9d13def16c23dbeda8ee5baa4b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-4.csv",
+          "size_bytes": 114987833,
+          "sha256": "9b24c4100db5c3564116cfbff16f0c059d3c39add8fa7ca3e35ea9f84751df62",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-95-dns.csv",
+          "size_bytes": 40348,
+          "sha256": "422b8f64c7f6e2c488d3219a812dabb074769e9d13def16c23dbeda8ee5baa4b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ip-10-100-1-95.csv",
+          "size_bytes": 113730455,
+          "sha256": "34ae08f66e6bd2fb6a6dbaa68196f2598d80efcfed0d6cf3f7e9b7062aadd420",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ubuntu-dns.csv",
+          "size_bytes": 40348,
+          "sha256": "422b8f64c7f6e2c488d3219a812dabb074769e9d13def16c23dbeda8ee5baa4b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_2021may-ubuntu.csv",
+          "size_bytes": 41272813,
+          "sha256": "9d12e29b80b586278f802f46e832ce87d6a64e98966e54ee25f7fd9c91913de4",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_testing_data.csv",
+          "size_bytes": 57289002,
+          "sha256": "e56aad64df13b9dde7be2d333f1f6b7da7f41596cb9b4105deb0fd051900706b",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_training_data.csv",
+          "size_bytes": 197348537,
+          "sha256": "18ceb80a7eb4b71296df13e3967e074a81ed5b80c2212b044c061ac81a1797e2",
+          "kind": "extracted_raw"
+        },
+        {
+          "path": "datasets/raw/beth/original/labelled_validation_data.csv",
+          "size_bytes": 45417796,
+          "sha256": "5a08ec47060af1cb8bb24ba632b5db0c2b1ac783aedc72693247b87c1170192e",
+          "kind": "extracted_raw"
+        }
+      ]
+    },
+    {
+      "name": "Wireless Network Slicing Dataset",
+      "kaggle_id": "ziya07/wireless-network-slicing-dataset",
+      "url": "https://www.kaggle.com/datasets/ziya07/wireless-network-slicing-dataset",
+      "author": "Ziya",
+      "license": "CC0: Public Domain",
+      "version": 1,
+      "downloaded_at_utc": "2026-09-22T20:40:13.672829+00:00",
+      "source_last_modified_utc": "2025-01-27T10:23:50+00:00",
+      "compressed_size_bytes": 179004,
+      "decompressed_size_bytes": 417290,
+      "files": [
+        {
+          "path": "datasets/raw/wireless-network-slicing/wireless-network-slicing-dataset.zip",
+          "size_bytes": 179004,
+          "sha256": "dbdbe3f15be8fb16ef2fa281ba162c45f684b6bbb076665a2e757febc9c7eb25",
+          "kind": "archive"
+        },
+        {
+          "path": "datasets/raw/wireless-network-slicing/original/6G_network_slicing_qos_dataset_2345.csv",
+          "size_bytes": 417290,
+          "sha256": "0b2a03bae135b04ab93c44592f8a210b33be2f39683d1b1556d950f96be1889b",
+          "kind": "extracted_raw"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+
+> aigatos-frontend@5.0.0 dev
+> vite --host 127.0.0.1
+
+
+  VITE v7.3.6  ready in 3077 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+19:18:17 [vite] vite.config.js changed, restarting server...
+19:18:17 [vite] vite.config.js changed, restarting server...
+19:18:19 [vite] server restarted.
+20:06:15 [vite] (client) page reload src/theme.ts
+20:06:20 [vite] (client) hmr update /src/Layout.tsx
+20:06:25 [vite] (client) hmr update /src/styles.css
+20:08:12 [vite] (client) page reload src/theme.ts
+20:08:18 [vite] (client) hmr update /src/Layout.tsx
+20:10:08 [vite] (client) hmr update /src/styles.css
+20:10:13 [vite] (client) hmr update /src/components.tsx
+20:10:43 [vite] vite.config.js changed, restarting server...
+20:10:44 [vite] server restarted.
+20:11:06 [vite] (client) ✨ new dependencies optimized: @mui/icons-material/LockOutlined, @mui/icons-material/SensorsRounded
+20:11:06 [vite] (client) ✨ optimized dependencies changed. reloading
+21:02:56 [vite] (client) hmr update /src/AgentInteractionPage.tsx, /src/pages.tsx
+21:03:03 [vite] (client) hmr update /src/App.tsx
+21:04:07 [vite] (client) hmr update /src/Layout.tsx
+21:04:26 [vite] (client) ✨ new dependencies optimized: @mui/icons-material/AddCircleOutlineRounded, @mui/icons-material/InsightsRounded
+21:04:26 [vite] (client) ✨ optimized dependencies changed. reloading
+21:08:03 [vite] (client) page reload src/LiveSimulationPage.tsx
+21:10:59 [vite] (client) ✨ new dependencies optimized: @mui/icons-material/ScienceRounded
+21:10:59 [vite] (client) ✨ optimized dependencies changed. reloading
+21:17:44 [vite] (client) hmr update /src/pages.tsx
+21:36:15 [vite] (client) hmr update /src/Layout.tsx
+21:36:18 [vite] (client) hmr update /src/LiveSimulationPage.tsx
+21:37:14 [vite] (client) hmr update /src/LiveSimulationPage.tsx
+21:38:52 [vite] (client) hmr update /src/LiveSimulationPage.tsx
+22:08:46 [vite] (client) hmr update /src/AgentInteractionPage.tsx, /src/pages.tsx, /src/Layout.tsx, /src/LiveSimulationPage.tsx
+22:09:14 [vite] (client) page reload src/main.tsx
+22:10:29 [vite] (client) hmr update /src/Layout.tsx
+22:11:25 [vite] (client) hmr update /src/Layout.tsx
+22:11:32 [vite] (client) ✨ new dependencies optimized: @mui/icons-material/HistoryRounded
+22:11:32 [vite] (client) ✨ optimized dependencies changed. reloading
+10:30:05 [vite] (client) hmr update /src/pages.tsx
+10:31:43 [vite] (client) hmr update /src/pages.tsx
+10:33:01 [vite] (client) hmr update /src/App.tsx
+10:33:14 [vite] (client) hmr update /src/App.tsx
+10:33:59 [vite] (client) hmr update /src/LiveSimulationPage.tsx
+10:34:54 [vite] (client) hmr update /src/LiveSimulationPage.tsx
+10:35:24 [vite] (client) hmr update /src/LiveSimulationPage.tsx
+10:35:44 [vite] (client) hmr update /src/LiveSimulationPage.tsx

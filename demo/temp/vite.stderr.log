@@ -1,0 +1,222 @@
+20:06:16 [vite] (client) Pre-transform error: Failed to load url /src/theme.ts (resolved id: D:/AIGATOS/frontend/src/theme.ts) in D:/AIGATOS/frontend/src/main.tsx. Does the file exist?
+20:08:13 [vite] (client) Pre-transform error: Failed to load url /src/Layout.tsx (resolved id: D:/AIGATOS/frontend/src/Layout.tsx) in D:/AIGATOS/frontend/src/App.tsx. Does the file exist?
+20:08:13 [vite] (client) Pre-transform error: Failed to load url /src/styles.css (resolved id: D:/AIGATOS/frontend/src/styles.css) in D:/AIGATOS/frontend/src/main.tsx. Does the file exist?
+21:03:03 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:03:15 [vite] (client) Pre-transform error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+21:03:15 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:03:27 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:04:07 [vite] (client) Pre-transform error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+21:04:07 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:04:10 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:04:27 [vite] (client) Pre-transform error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+21:04:28 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:05:02 [vite] Internal server error: Failed to resolve import "./LiveSimulationPage" from "src/App.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: D:/AIGATOS/frontend/src/App.tsx:5:54
+  4  |  import { ApprovalPage, CampaignDetailPage, CampaignsPage, DashboardPage, ExplanationPage, IncidentPage, NotFoundPage,...
+  5  |  import { AgentInteractionPage } from "./AgentInteractionPage";
+  6  |  import { AgentMaturityPage, LiveSimulationPage } from "./LiveSimulationPage";
+     |                                                         ^
+  7  |  export function App() {
+  8  |    return /* @__PURE__ */ jsxDEV(Routes, { children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(L...
+      at TransformPluginContext._formatLog (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29079:43)
+      at TransformPluginContext.error (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:29076:14)
+      at normalizeUrl (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27199:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27257:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:27225:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:28877:14)
+      at async loadAndTransform (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:22746:26)
+      at async viteTransformMiddleware (file:///D:/AIGATOS/frontend/node_modules/vite/dist/node/chunks/config.js:24622:20)
+21:08:03 [vite] Internal server error: Transform failed with 1 error:
+D:/AIGATOS/frontend/src/LiveSimulationPage.tsx:118:2938: ERROR: The character "}" is not valid inside a JSX element
+  Plugin: vite:esbuild
+  File: D:/AIGATOS/frontend/src/LiveSimulationPage.tsx:118:2854
+  
+  The character "}" is not valid inside a JSX element
+  117 |    const query = useQuery({ queryKey: ['agent-maturity'], queryFn: () => apiGet<MaturityResponse>(endpoints.agentMatur...
+  118 |    return <><PageHeader eyebrow="Maturity Live" title="Maturité des agents" description="Niveau calculé depuis des cri...
+  119 |  }_s2(AgentMaturityPage, "c7fxJWDO4uMGjIdKMJSj1aiS9wg=", false, function () {return [useQuery];});_c4 = AgentMaturityP...
+      |       ^
+  120 |  
+  121 |  import * as RefreshRuntime from "/@react-refresh";
+  
+      at failureErrorWithLog (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:1752:15)
+      at D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:1019:50
+      at responseCallbacks.<computed> (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:886:9)
+      at handleIncomingPacket (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:941:12)
+      at Socket.readFromStdout (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:864:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+21:08:03 [vite] (client) Pre-transform error: Transform failed with 1 error:
+D:/AIGATOS/frontend/src/LiveSimulationPage.tsx:118:2938: ERROR: The character "}" is not valid inside a JSX element
+  Plugin: vite:esbuild
+  File: D:/AIGATOS/frontend/src/LiveSimulationPage.tsx:118:2854
+  
+  The character "}" is not valid inside a JSX element
+  117 |    const query = useQuery({ queryKey: ['agent-maturity'], queryFn: () => apiGet<MaturityResponse>(endpoints.agentMatur...
+  118 |    return <><PageHeader eyebrow="Maturity Live" title="Maturité des agents" description="Niveau calculé depuis des cri...
+  119 |  }_s2(AgentMaturityPage, "c7fxJWDO4uMGjIdKMJSj1aiS9wg=", false, function () {return [useQuery];});_c4 = AgentMaturityP...
+      |       ^
+  120 |  
+  121 |  import * as RefreshRuntime from "/@react-refresh";
+  
+21:08:18 [vite] Internal server error: Transform failed with 1 error:
+D:/AIGATOS/frontend/src/LiveSimulationPage.tsx:118:2938: ERROR: The character "}" is not valid inside a JSX element
+  Plugin: vite:esbuild
+  File: D:/AIGATOS/frontend/src/LiveSimulationPage.tsx:118:2854
+  
+  The character "}" is not valid inside a JSX element
+  117 |    const query = useQuery({ queryKey: ['agent-maturity'], queryFn: () => apiGet<MaturityResponse>(endpoints.agentMatur...
+  118 |    return <><PageHeader eyebrow="Maturity Live" title="Maturité des agents" description="Niveau calculé depuis des cri...
+  119 |  }_s2(AgentMaturityPage, "c7fxJWDO4uMGjIdKMJSj1aiS9wg=", false, function () {return [useQuery];});_c4 = AgentMaturityP...
+      |       ^
+  120 |  
+  121 |  import * as RefreshRuntime from "/@react-refresh";
+  
+      at failureErrorWithLog (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:1752:15)
+      at D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:1019:50
+      at responseCallbacks.<computed> (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:886:9)
+      at handleIncomingPacket (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:941:12)
+      at Socket.readFromStdout (D:\AIGATOS\frontend\node_modules\esbuild\lib\main.js:864:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

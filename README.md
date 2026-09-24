@@ -408,4 +408,5 @@ $env:AIGATOS_OPERATION_MODE = 'live_simulation'
 & 'D:\AIGATOS\.venv\Scripts\python.exe' -m uvicorn app.main:app --app-dir 'D:\AIGATOS\backend' --host 127.0.0.1 --port 8000
 ```
 #   A I G A T O S -  
+ #   A I G A T O S -  
  

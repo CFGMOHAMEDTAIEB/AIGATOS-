@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: aigatos-backend
+Version: 0.2.0
+Summary: AIGATOS OTA campaign API and simulator
+Requires-Python: >=3.11
+Requires-Dist: fastapi<1,>=0.115
+Requires-Dist: uvicorn[standard]<1,>=0.30
+Requires-Dist: pydantic<3,>=2.9
+Requires-Dist: sqlalchemy<3,>=2.0
+Requires-Dist: alembic<2,>=1.13
+Requires-Dist: psycopg[binary]<4,>=3.2
+Requires-Dist: celery[redis]<6,>=5.5
+Provides-Extra: test
+Requires-Dist: pytest<10,>=8; extra == "test"
+Requires-Dist: httpx<1,>=0.27; extra == "test"

@@ -1,0 +1,32 @@
+.venv/
+data/
+docker-data/
+logs/
+reports/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.db
+.env
+.env.*
+!.env.example
+
+# Local provider examples may contain API credentials. Never commit them.
+glm-api.py
+googl-api.py
+kimi-api.py
+deepseek-ai-api.py
+secrets/models-api/
+kaggle.json
+**/kaggle.json
+
+# Downloaded and derived datasets are local artifacts.
+datasets/raw/
+datasets/processed/
+models/
+
+# Frontend generated artifacts and local Vite environment files.
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.local

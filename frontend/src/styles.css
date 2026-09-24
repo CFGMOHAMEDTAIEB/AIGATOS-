@@ -1,0 +1,39 @@
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-width:320px}
+a{overflow-wrap:anywhere}
+::selection{background:#cfe1ff;color:#081525}
+.app-drawer{height:100%;color:#dce8f3;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 20% 0%,rgba(37,99,235,.26),transparent 26%),linear-gradient(180deg,#081525 0%,#0b1c2f 56%,#07121f 100%)}
+.brand-block{padding:30px 25px 24px}
+.brand-mark{width:40px;height:40px;border:1px solid rgba(125,190,255,.28);border-radius:13px;display:flex;align-items:flex-end;justify-content:center;gap:3px;padding:9px;background:linear-gradient(145deg,rgba(37,99,235,.5),rgba(6,182,212,.16));box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.brand-mark>div{width:5px;border-radius:4px;background:linear-gradient(180deg,#62d7ee,#5594ff)}
+.brand-mark>div:nth-child(1){height:10px}.brand-mark>div:nth-child(2){height:20px}.brand-mark>div:nth-child(3){height:15px}
+.brand-name{font-size:1.22rem!important;font-weight:900!important;letter-spacing:.17em!important;color:#fff}
+.brand-tagline{font-size:.62rem!important;font-weight:750!important;letter-spacing:.13em!important;color:#7590aa}
+.demo-banner{margin:0 17px 14px;padding:14px 15px;border:1px solid rgba(91,173,255,.19);border-radius:13px;color:#dff2ff;background:linear-gradient(135deg,rgba(37,99,235,.27),rgba(6,182,212,.1));box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.nav-list{padding:2px 12px 18px!important;overflow-y:auto}
+.nav-section{padding:17px 13px 7px;font-size:.62rem!important;font-weight:800!important;letter-spacing:.14em!important;color:#5e778f}
+.nav-list .MuiListItemButton-root{position:relative;min-height:44px;border-radius:11px;margin-bottom:3px;padding:8px 12px;color:#a9bacb;transition:color .18s ease,background-color .18s ease,transform .18s ease}
+.nav-list .MuiListItemIcon-root{min-width:38px;color:inherit}.nav-list .MuiSvgIcon-root{font-size:1.18rem}.nav-list .MuiListItemText-primary{font-size:.85rem;font-weight:660}
+.nav-list .MuiListItemButton-root:hover{color:#edf7ff;background:rgba(255,255,255,.055);transform:translateX(2px)}
+.nav-list .MuiListItemButton-root.Mui-selected{color:#fff;background:linear-gradient(90deg,rgba(37,99,235,.31),rgba(6,182,212,.08));box-shadow:inset 0 0 0 1px rgba(94,166,255,.14)}
+.nav-list .MuiListItemButton-root.Mui-selected:hover{background:linear-gradient(90deg,rgba(37,99,235,.37),rgba(6,182,212,.11))}
+.nav-active-indicator{position:absolute;right:0;width:3px;height:22px;border-radius:3px;background:transparent}.Mui-selected .nav-active-indicator{background:#51cced;box-shadow:0 0 12px #41bfe5}
+.live-dot{width:8px;height:8px;flex:0 0 auto;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.11),0 0 12px rgba(52,211,153,.46)}
+.topbar{color:#102033!important;border-bottom:1px solid rgba(214,224,235,.9);background:rgba(250,252,255,.87)!important;backdrop-filter:blur(18px) saturate(140%);box-shadow:0 5px 22px rgba(8,21,37,.035)!important}
+.control-avatar{width:37px!important;height:37px!important;color:#2563eb!important;background:linear-gradient(145deg,#e8f0ff,#dceaff)!important;border:1px solid #d3e2fb}
+.secure-chip{color:#1d4ed8!important;border:1px solid #ccddfa!important;background:#edf4ff!important}.secure-chip .MuiChip-icon{color:#2563eb!important;font-size:15px!important}
+.service-indicator{display:flex;align-items:center;gap:8px;margin-left:5px;padding:7px 11px;border-radius:10px;color:#52667b;background:#fff;border:1px solid #e1e8f0}
+.app-main{position:relative}.app-main:before{content:"";position:fixed;pointer-events:none;inset:76px 0 auto 286px;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.2),transparent)}
+.page-header{position:relative}.eyebrow-marker{width:20px;height:3px;border-radius:3px;background:linear-gradient(90deg,#2563eb,#06b6d4)}.page-header__action .MuiButton-root{background:#fff}
+.state-panel{min-height:300px;border:1px dashed #cad6e3;border-radius:18px;background:rgba(255,255,255,.58)}
+.section-card{overflow:visible!important}.section-card__accent{width:4px;height:19px;flex:0 0 auto;border-radius:4px;background:linear-gradient(180deg,#2563eb,#06b6d4);box-shadow:0 0 13px rgba(37,99,235,.25)}
+.metric-card{position:relative;overflow:hidden;height:100%}.metric-card:after{content:"";position:absolute;width:96px;height:96px;border-radius:50%;right:-50px;top:-55px;background:currentColor;opacity:.045}.metric-card:hover{transform:translateY(-2px);border-color:#cdd9e7;box-shadow:0 14px 34px rgba(8,21,37,.085)}
+.metric-card__dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 5px currentColor;opacity:.22}.metric-card--primary{color:#2563eb}.metric-card--success{color:#059669}.metric-card--error{color:#dc3444}.metric-card--warning{color:#d97706}
+.MuiTableHead-root .MuiTableCell-root{font-weight:800;background:#f4f7fb;color:#405269}.MuiTableRow-root:target{outline:2px solid #2563eb;outline-offset:-2px;background:#eef4ff}.MuiStepper-root .MuiStepIcon-root.Mui-active{filter:drop-shadow(0 4px 7px rgba(37,99,235,.24))}
+.MuiLinearProgress-root{background:#e5ecf4!important}.MuiLinearProgress-bar{background:linear-gradient(90deg,#2563eb,#06b6d4)!important}
+.agent-flow{display:grid;grid-template-columns:repeat(6,minmax(160px,1fr));gap:24px;align-items:stretch}.agent-flow__item{position:relative;min-width:0}.agent-transfer{position:absolute;right:-23px;top:50%;z-index:2;color:#a9b7c6;transform:translateY(-50%)}.agent-transfer--done{color:#059669}
+.agent-node{transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease;background:linear-gradient(160deg,#fff 54%,#f8fbff)!important}.agent-node:hover{border-color:#c5d6e9!important;box-shadow:0 14px 32px rgba(8,21,37,.08)!important}.agent-node--active{transform:translateY(-6px);border-color:#2563eb!important;box-shadow:0 18px 42px rgba(37,99,235,.17)!important}
+.agent-pulse{position:absolute;inset:-5px;border:2px solid #2563eb;border-radius:21px;animation:agentPulse 1.4s ease-out infinite;pointer-events:none}.phase-panel{opacity:.58;border-radius:14px!important;transition:opacity .3s ease,transform .3s ease,border-color .3s ease,box-shadow .3s ease;background:#fbfcfe!important}.phase-panel--active{opacity:1;transform:translateY(-3px);border-color:#2563eb!important;background:#fff!important;box-shadow:0 10px 27px rgba(37,99,235,.105)}
+@keyframes agentPulse{0%{opacity:.7;transform:scale(.992)}70%,100%{opacity:0;transform:scale(1.035)}}
+@media(max-width:1400px){.agent-flow{grid-template-columns:repeat(3,1fr)}.agent-transfer{display:none}}@media(max-width:900px){.service-indicator{display:none}.app-main:before{left:0}}@media(max-width:800px){.agent-flow{grid-template-columns:1fr}.page-header__action,.page-header__action .MuiButton-root{width:100%}}@media(max-width:600px){.secure-chip{display:none!important}.MuiCardContent-root{padding:19px!important}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.agent-pulse{animation:none}}
